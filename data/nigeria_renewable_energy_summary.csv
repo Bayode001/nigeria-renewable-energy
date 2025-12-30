@@ -1,0 +1,38 @@
+ADM1_EN,solar_norm,solar_class,wind_norm,wind_class,hydro_norm,hydro_class,composite_norm,composite_class,overall_score,overall_percent,overall_class,recommended_energy,investment_rank,investment_priority
+Abia,0.674199785,Good,0.158802141,Very Low,0.2,Low,0,Very Low,0.357320556,35.73205564,Low,Solar,27,Low Priority
+Adamawa,0.756084531,Good,0.456645085,Moderate,0.217,Low,0.618253726,Good,0.544652711,54.46527106,Moderate,Solar,13,Medium Priority
+Akwa Ibom,0.659103563,Good,0,Very Low,0.186,Very Low,0,Very Low,0.300841425,30.08414252,Low,Solar,37,Consider Later
+Anambra,0.683071462,Good,0.2292909,Low,0.183,Very Low,0,Very Low,0.378615855,37.86158548,Low,Solar,25,Low Priority
+Bauchi,0.772638539,Good,0.825355308,Excellent,0.209,Low,0.803099501,Excellent,0.678771958,67.87719579,Good,Wind,11,Medium Priority
+Bayelsa,0.661069768,Good,0.043637187,Very Low,0.164,Very Low,0,Very Low,0.310319063,31.03190632,Low,Solar,36,Consider Later
+Benue,0.703125688,Good,0.624280599,Good,0.214,Low,0.261150154,Low,0.53744947,53.74494704,Moderate,Solar,14,Medium Priority
+Borno,0.755618974,Good,0.963674945,Excellent,0.188,Very Low,0.876447897,Excellent,0.716594863,71.65948629,Good,Wind,4,High Priority
+Cross River,0.67867995,Good,0.073102477,Very Low,0.198,Very Low,0.043128693,Very Low,0.337315592,33.73155925,Low,Solar,33,Consider Later
+Delta,0.670698867,Good,0.10145772,Very Low,0.176,Very Low,0,Very Low,0.333916863,33.39168627,Low,Solar,34,Consider Later
+Ebonyi,0.690243662,Good,0.231261653,Low,0.202,Low,0.037228237,Very Low,0.389598784,38.95987845,Low,Solar,23,Low Priority
+Edo,0.678782674,Good,0.128961423,Very Low,0.203,Low,0.021124867,Very Low,0.352913983,35.29139833,Low,Solar,29,Low Priority
+Ekiti,0.694232868,Good,0.460479285,Moderate,0.22,Low,0.155163744,Very Low,0.475353307,47.53533073,Moderate,Solar,18,Medium Priority
+Enugu,0.687409842,Good,0.212097804,Low,0.216,Low,0.024511829,Very Low,0.384244461,38.4244461,Low,Solar,24,Low Priority
+Federal Capital Territory,0.717769825,Good,0.262497013,Low,0.224,Low,0.265542552,Low,0.437211289,43.72112892,Moderate,Solar,21,Low Priority
+Gombe,0.771694023,Good,0.940333734,Excellent,0.221,Low,0.72955747,Good,0.707933476,70.79334764,Good,Wind,6,High Priority
+Imo,0.676587366,Good,0.129796448,Very Low,0.197,Very Low,0,Very Low,0.348973881,34.89738807,Low,Solar,31,Consider Later
+Jigawa,0.788948483,Good,0.789488131,Good,0.194,Very Low,0.917991578,Excellent,0.68302499,68.30249903,Good,Wind,10,Medium Priority
+Kaduna,0.756631706,Good,0.988399012,Excellent,0.223,Low,0.544032536,Moderate,0.69817564,69.81756397,Good,Wind,8,Medium Priority
+Kano,0.78748674,Good,0.938435035,Excellent,0.211,Low,0.83483662,Excellent,0.722208868,72.22088684,Good,Wind,3,High Priority
+Katsina,0.789113592,Good,0.903062285,Excellent,0.213,Low,0.944067743,Excellent,0.723570896,72.35708964,Good,Wind,2,High Priority
+Kebbi,0.759383159,Good,0.644521128,Good,0.211,Low,0.589954782,Moderate,0.59830508,59.83050802,Moderate,Solar,12,Medium Priority
+Kogi,0.70183459,Good,0.336895706,Low,0.214,Low,0.216056622,Low,0.44620821,44.62082099,Moderate,Solar,20,Low Priority
+Kwara,0.713255553,Good,0.544644796,Moderate,0.221,Low,0.264352844,Low,0.519330944,51.93309443,Moderate,Solar,15,Medium Priority
+Lagos,0.705755477,Good,0.202922897,Low,0.156,Very Low,0.017550333,Very Low,0.376134093,37.6134093,Low,Solar,26,Low Priority
+Nasarawa,0.713083949,Good,0.320746684,Low,0.217,Low,0.265548697,Low,0.451412454,45.14124544,Moderate,Solar,19,Low Priority
+Niger,0.733416708,Good,0.464720825,Moderate,0.218,Low,0.329356941,Low,0.509318625,50.93186248,Moderate,Solar,16,Medium Priority
+Ogun,0.671186094,Good,0.04279695,Very Low,0.199,Very Low,0,Very Low,0.321113523,32.11135226,Low,Solar,35,Consider Later
+Ondo,0.675321971,Good,0.082198646,Very Low,0.203,Low,0.02318116,Very Low,0.337706498,33.77064981,Low,Solar,32,Consider Later
+Osun,0.679801918,Good,0.131251721,Very Low,0.214,Low,0.008266851,Very Low,0.354922968,35.49229684,Low,Solar,28,Low Priority
+Oyo,0.679197985,Good,0.315292923,Low,0.224,Low,0.083566452,Very Low,0.419423716,41.9423716,Moderate,Solar,22,Low Priority
+Plateau,0.739492134,Good,1,Excellent,0.221,Low,0.515029915,Moderate,0.691499845,69.14998451,Good,Wind,9,Medium Priority
+Rivers,0.666677137,Good,0.162089168,Very Low,0.177,Very Low,0,Very Low,0.350697605,35.06976053,Low,Solar,30,Consider Later
+Sokoto,0.772818731,Good,0.892640093,Excellent,0.207,Low,0.835618173,Excellent,0.701881338,70.18813378,Good,Wind,7,High Priority
+Taraba,0.693078148,Good,0.467708389,Moderate,0.213,Low,0.340497932,Low,0.494193569,49.4193569,Moderate,Solar,17,Medium Priority
+Yobe,0.77943872,Good,0.969928775,Excellent,0.192,Very Low,1,Excellent,0.74115412,74.11541204,Good,Wind,1,High Priority
+Zamfara,0.760630913,Good,0.991661736,Excellent,0.216,Low,0.709818234,Good,0.715932709,71.59327094,Good,Wind,5,High Priority

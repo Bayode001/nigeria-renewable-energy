@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nigeria Renewable Energy Suitability Map</title>
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            /* Rest of your body styles... */;
+        }
+        
+        .energy-tab {
+            /* Add to existing .energy-tab styles */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Header Styles */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 0.8rem 1.5rem 0.5rem 1.5rem; /* Reduced padding */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            min-height: 60px; /* Fixed height */
+        }
+        
+        .header h1 {
+            font-size: 1.5rem; /* Reduced from 2.0rem */
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.3rem; /* Reduced */
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Reduced from 15px */
+            line-height: 1.2;
+        }
+        
+        .header h1 i {
+            color: #667eea;
+            font-size: 1.5rem; /* Reduced from 2.0rem */
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 0.95rem; /* Reduced from 1.1rem */
+            line-height: 1.6;
+            max-width: 800px;
+            margin-bottom: 0.3rem; /* Added to reduce space */
+        }
+        
+        .version-badge {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px; /* Reduced */
+            border-radius: 20px;
+            font-size: 0.8rem; /* Reduced from 0.9rem */
+            font-weight: 600;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        
+        /* Main Content Layout */
+        .main-content {
+            display: flex;
+            height: calc(100vh - 70px); /* Reduced from 140px to 70px */
+            gap: 0;
+        }
+        
+        /* Map Container */
+        .map-container {
+            flex: 3;
+            position: relative;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #f0f2f5;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            flex: 1.2;
+            background: white;
+            padding: 1.5rem;
+            overflow-y: auto;
+            min-width: 400px;
+            max-width: 450px;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.98);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .spinner {
+            width: 70px;
+            height: 70px;
+            border: 6px solid rgba(102, 126, 234, 0.1);
+            border-top: 6px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 25px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Energy Tabs */
+        .energy-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .energy-tab {
+            flex: 1;
+            padding: 14px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: #495057;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .energy-tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+        
+        .energy-tab.active::before {
+            opacity: 1;
+        }
+        
+        .energy-tab.active {
+            color: #2c3e50;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
+        }
+        
+        .energy-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        .tab-icon {
+            font-size: 1.4rem !important; /* Reduced from 1.8rem */
+            z-index: 2;
+        }
+        
+        .tab-text {
+           font-size: 0.78rem !important; /* Even smaller font */
+           font-weight: 600;
+           letter-spacing: 0;
+        }
+        
+        /* Legend */
+        .legend {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .legend h3 {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .legend h3 i {
+            color: #667eea;
+        }
+        
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(248, 249, 250, 0.5);
+            transition: all 0.2s ease;
+        }
+        
+        .legend-item:hover {
+            background: rgba(248, 249, 250, 1);
+            transform: translateX(5px);
+        }
+        
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+        
+        .legend-label {
+            flex: 1;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .legend-range {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 400;
+        }
+        
+        /* State Info Panel */
+        .state-info {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .state-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+        
+        .state-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .state-name i {
+            color: #667eea;
+            font-size: 1.8rem;
+        }
+        
+        .recommended-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .energy-score {
+            font-size: 3.5rem;
+            font-weight: 800;
+            text-align: center;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .energy-score::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .score-label {
+            font-size: 1rem;
+            color: #6c757d;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            margin: 25px 0;
+            padding: 20px;
+            background: rgba(248, 249, 250, 0.5);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-container h4 {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .chart-container h4 i {
+            color: #667eea;
+        }
+        
+        .suitability-chart {
+            height: 220px;
+            position: relative;
+        }
+        
+        /* Energy Comparison */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .energy-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .energy-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: currentColor;
+            opacity: 0.3;
+        }
+        
+        .energy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .energy-card.best {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2); }
+            50% { box-shadow: 0 4px 25px rgba(102, 126, 234, 0.4); }
+        }
+        
+        .energy-type {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .energy-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+            color: inherit;
+        }
+        
+        .energy-class {
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.05);
+            display: inline-block;
+        }
+        
+        /* Download Section */
+        .download-section {
+            margin-top: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        .download-section h4 {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .download-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 20px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+        
+        .download-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .download-btn i {
+            font-size: 1.1rem;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .sidebar {
+                min-width: 100%;
+                max-width: 100%;
+                max-height: 50vh;
+            }
+            
+            .map-container {
+                height: 60vh;
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .energy-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .energy-tab {
+                flex: 1 0 calc(50% - 8px);
+            }
+            
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .legend-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+        }
+        
+        /* Tooltip */
+        .leaflet-tooltip {
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            border: none;
+        }
+        
+        /* Popup */
+        .leaflet-popup-content {
+            font-size: 0.95rem;
+            min-width: 250px;
+        }
+        
+        .leaflet-popup-content h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .popup-score {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-solar-map"></i>   
+             🌍 Nigeria Renewable Energy Suitability Analysis
+            </h1>
+            <p>
+                Interactive analysis of Solar, Wind, Hydro, and Composite renewable energy potential across 37 Nigerian states.
+            </p>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Map Container -->
+            <div class="map-container">
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" id="loading-overlay">
+                    <div class="spinner"></div>
+                    <h3 id="loading-text" style="color: #2c3e50; margin-bottom: 10px;">Loading Renewable Energy Data v2.0...</h3>
+                    <p id="loading-details" style="color: #6c757d; text-align: center; max-width: 400px;">
+                        Processing custom classifications and suitability scores...
+                    </p>
+                </div>
+                
+                <!-- Map -->
+                <div id="map"></div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Energy Type Tabs -->
+                <div class="energy-tabs">
+                    <button class="energy-tab active" onclick="switchEnergyType('solar')" data-type="solar">
+                        <span class="tab-icon">☀️</span>
+                        <span class="tab-text">Solar</span>
+                    </button>
+                    <button class="energy-tab" onclick="switchEnergyType('wind')" data-type="wind">
+                        <span class="tab-icon">💨</span>
+                        <span class="tab-text">Wind</span>
+                    </button>
+                    <button class="energy-tab" onclick="switchEnergyType('hydro')" data-type="hydro">
+                        <span class="tab-icon">💧</span>
+                        <span class="tab-text">Hydro</span>
+                    </button>
+                    <button class="energy-tab" onclick="switchEnergyType('composite')" data-type="composite">
+                        <span class="tab-icon">📊</span>
+                        <span class="tab-text">Composite</span>
+                    </button>
+                    <button class="energy-tab" onclick="switchEnergyType('overall')" data-type="overall">
+                        <span class="tab-icon">🌟</span>
+                        <span class="tab-text">Overall</span>
+                    </button>
+                </div>
+                
+                <!-- Legend -->
+                <div class="legend" id="legend-container">
+                    <h3><i class="fas fa-layer-group"></i> Suitability Legend</h3>
+                    <div class="legend-items" id="legend-content">
+                        <!-- Legend will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Selected State Info -->
+                <div class="state-info" id="state-info" style="display: none;">
+                    <div class="state-header">
+                        <div class="state-name">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span id="selected-state-name">-</span>
+                        </div>
+                        <div class="recommended-badge" id="recommended-energy">
+                            <i class="fas fa-star"></i>
+                            <span>Recommended: -</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Energy Score -->
+                    <div class="energy-score" id="current-energy-score">
+                        <div id="score-value">-</div>
+                        <div class="score-label" id="score-label">Suitability Score</div>
+                    </div>
+                    
+                    <!-- Suitability Chart -->
+                    <div class="chart-container">
+                        <h4><i class="fas fa-chart-bar"></i> Energy Suitability Comparison</h4>
+                        <div class="suitability-chart">
+                            <canvas id="suitability-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Energy Comparison -->
+                    <h4 style="margin: 20px 0 15px 0; color: #2c3e50; font-size: 1.1rem;">
+                        <i class="fas fa-balance-scale"></i> Energy Type Comparison
+                    </h4>
+                    <div class="comparison-grid" id="energy-comparison">
+                        <!-- Energy cards will be populated here -->
+                    </div>
+                    
+                    <!-- Confidence Level -->
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(248, 249, 250, 0.5); border-radius: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 0.9rem; color: #6c757d;">Recommendation Confidence</div>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: #2c3e50;" id="confidence-level">-</div>
+                            </div>
+                            <div id="confidence-icon" style="font-size: 1.5rem;">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Download Section -->
+                <div class="download-section">
+                    <h4><i class="fas fa-download"></i> Download Data </h4>
+                    <div class="download-buttons">
+                        <a href="nigeria_renewable_energy_analysis_v2.geojson" download class="download-btn">
+                            <i class="fas fa-map"></i>
+                            Analysis Dataset (GeoJSON)
+                        </a>
+                        <a href="nigeria_renewable_summary_v2.csv" download class="download-btn">
+                            <i class="fas fa-table"></i>
+                            Summary Data (CSV)
+                        </a>
+                        <a href="nigeria_renewable_ranking_v2.csv" download class="download-btn">
+                            <i class="fas fa-trophy"></i>
+                            State Rankings
+                        </a>
+                        <a href="classification_reference_v2.csv" download class="download-btn">
+                            <i class="fas fa-book"></i>
+                            Classification Reference
+                        </a>
+                        <button onclick="exportCurrentView()" class="download-btn">
+                            <i class="fas fa-camera"></i>
+                            Export Map Screenshot
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="footer">
+                    <p>
+                        Data Source: Processed GIS Raster Analysis | 
+                        Classification: Energy-Specific Custom Thresholds |
+                        <a href="#" onclick="showMethodology()">View Methodology</a>
+                    </p>
+                    <p>Nigeria Renewable Energy Analysis | Last Updated: <span id="current-date"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let map;
+        let geojsonLayer;
+        let currentEnergyType = 'solar';
+        let currentData = null;
+        let chart = null;
+        let selectedState = null;
+        
+        // Energy-specific color schemes
+        const colorSchemes = {
+            solar: {
+                colors: ['#fff7bc', '#fec44f', '#d95f0e', '#993404', '#662506'],
+                labels: ['Very Low', 'Low', 'Medium', 'High', 'Very High']
+            },
+            wind: {
+                colors: ['#eff3ff', '#bdd7e7', '#6baed6', '#3182bd', '#08519c'],
+                labels: ['Very Low', 'Low', 'Medium', 'High', 'Very High']
+            },
+            hydro: {
+                colors: ['#e0f3db', '#a8ddb5', '#4eb3d3', '#2b8cbe', '#08589e'],
+                labels: ['Very Low', 'Low', 'Medium', 'High', 'Very High']
+            },
+            composite: {
+                colors: ['#fde0dd', '#fa9fb5', '#c51b8a', '#7a0177', '#49006a'],
+                labels: ['Very Low', 'Low', 'Medium', 'High', 'Very High']
+            },
+            overall: {
+                colors: ['#ffeda0', '#feb24c', '#f03b20', '#bd0026', '#800026'],
+                labels: ['Poor', 'Fair', 'Moderate', 'Good', 'Excellent']
+            }
+        };
+        
+        // Energy-specific classification thresholds
+        const classificationThresholds = {
+            solar: [
+                { max: 0.68, label: 'Very Low' },
+                { max: 0.69, label: 'Low' },
+                { max: 0.71, label: 'Medium' },
+                { max: 0.76, label: 'High' },
+                { max: 1.0, label: 'Very High' }
+            ],
+            wind: [
+                { max: 0.1, label: 'Very Low' },
+                { max: 0.3, label: 'Low' },
+                { max: 0.5, label: 'Medium' },
+                { max: 0.7, label: 'High' },
+                { max: 1.0, label: 'Very High' }
+            ],
+            hydro: [
+                { max: 0.17, label: 'Very Low' },
+                { max: 0.19, label: 'Low' },
+                { max: 0.20, label: 'Medium' },
+                { max: 0.21, label: 'High' },
+                { max: 1.0, label: 'Very High' }
+            ],
+            composite: [
+                { max: 0.1, label: 'Very Low' },
+                { max: 0.3, label: 'Low' },
+                { max: 0.5, label: 'Medium' },
+                { max: 0.7, label: 'High' },
+                { max: 1.0, label: 'Very High' }
+            ],
+            overall: [
+                { max: 0.1, label: 'Poor' },
+                { max: 0.3, label: 'Fair' },
+                { max: 0.5, label: 'Moderate' },
+                { max: 0.7, label: 'Good' },
+                { max: 1.0, label: 'Excellent' }
+            ]
+        };
+        
+        // Set current date in footer
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+        });
+        
+        function initMap() {
+            updateLoading('Initializing interactive map...', 'Setting up visualization components');
+            
+            try {
+                // Create map instance centered on Nigeria
+                map = L.map('map').setView([9.0820, 8.6753], 6);
+                
+                // Add OpenStreetMap base layer
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    maxZoom: 18,
+                    minZoom: 4
+                }).addTo(map);
+                
+                // Add a subtle terrain layer
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '© CARTO',
+                    maxZoom: 18,
+                    opacity: 0.5
+                }).addTo(map);
+                
+                // Load data
+                loadData();
+                
+            } catch (error) {
+                console.error('Map initialization error:', error);
+                updateLoading(`<span style="color: #e74c3c;">Failed to initialize map</span>`, error.message);
+            }
+        }
+        
+        function updateLoading(message, details = '') {
+            const loadingText = document.getElementById('loading-text');
+            const loadingDetails = document.getElementById('loading-details');
+            
+            if (loadingText) loadingText.innerHTML = message;
+            if (loadingDetails) loadingDetails.textContent = details;
+        }
+        
+        function loadData() {
+            updateLoading('Loading renewable energy analysis v2.0...', 'Fetching custom-classified datasets');
+            
+            // Remove existing layer
+            if (geojsonLayer) {
+                map.removeLayer(geojsonLayer);
+            }
+            
+            // Try files in order of preference (v2 first)
+            const dataFiles = [
+                'nigeria_renewable_energy_analysis_v2.geojson',
+                'nigeria_renewable_energy_analysis.geojson',
+                'data/analysis.geojson'
+            ];
+            
+            let currentFileIndex = 0;
+            
+            function tryLoadFile() {
+                if (currentFileIndex >= dataFiles.length) {
+                    updateLoading(
+                        `<div style="text-align: center; color: #e74c3c;">
+                            <h3 style="margin-bottom: 15px;">⚠️ Data Files Not Found</h3>
+                            <p style="margin-bottom: 10px;">Please run the v2 processing script first:</p>
+                            <code style="background: #f8f9fa; padding: 10px; border-radius: 5px; display: block; margin: 10px auto; max-width: 400px;">
+                                combine_data_final_v2.py
+                            </code>
+                            <p style="margin-top: 15px; font-size: 0.9rem;">Expected files: ${dataFiles.join(', ')}</p>
+                        </div>`,
+                        'Data loading failed'
+                    );
+                    return;
+                }
+                
+                const file = dataFiles[currentFileIndex];
+                updateLoading(`Loading: <strong>${file}</strong>`, `Attempt ${currentFileIndex + 1} of ${dataFiles.length}`);
+                
+                fetch(file)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(`✅ Successfully loaded: ${file}`);
+                        console.log('Data structure:', data.features ? `FeatureCollection with ${data.features.length} features` : 'Unknown');
+                        
+                        currentData = data;
+                        currentFileIndex = dataFiles.length; // Stop trying
+                        
+                        updateLoading('Creating interactive map layer...', `Loaded ${data.features ? data.features.length : 'unknown'} states with custom classifications`);
+                        
+                        // Create map layer
+                        createMapLayer();
+                        
+                        // Hide loading overlay with smooth transition
+                        setTimeout(() => {
+                            const overlay = document.getElementById('loading-overlay');
+                            overlay.style.opacity = '0';
+                            overlay.style.transition = 'opacity 0.5s ease';
+                            setTimeout(() => {
+                                overlay.style.display = 'none';
+                            }, 500);
+                        }, 800);
+                        
+                    })
+                    .catch(error => {
+                        console.warn(`Failed to load ${file}:`, error.message);
+                        currentFileIndex++;
+                        setTimeout(tryLoadFile, 500);
+                    });
+            }
+            
+            tryLoadFile();
+        }
+        
+        function switchEnergyType(type) {
+            currentEnergyType = type;
+            
+            // Update active tab
+            document.querySelectorAll('.energy-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-type="${type}"]`).classList.add('active');
+            
+            // Update map colors
+            if (geojsonLayer) {
+                geojsonLayer.setStyle(function(feature) {
+                    return getStyleForFeature(feature);
+                });
+                
+                // Update legend
+                updateLegend();
+                
+                // Update selected state info if any
+                if (selectedState) {
+                    updateStateInfo(selectedState);
+                }
+            }
+        }
+        
+        function getStyleForFeature(feature) {
+            const props = feature.properties || feature;
+            const score = getScoreForCurrentType(props);
+            const classification = getClassificationForCurrentType(score);
+            const color = getColorForClassification(classification, currentEnergyType);
+            
+            return {
+                fillColor: color,
+                weight: 1.5,
+                opacity: 0.8,
+                color: 'rgba(255, 255, 255, 0.9)',
+                fillOpacity: 0.7,
+                dashArray: null
+            };
+        }
+        
+        function getScoreForCurrentType(props) {
+            // Try multiple column naming conventions
+            const columnVariants = {
+                solar: ['solar_norm', 'solar_mean', 'solar_score'],
+                wind: ['wind_norm', 'wind_mean', 'wind_score'],
+                hydro: ['hydro_norm', 'hydro_mean', 'hydro_score'],
+                composite: ['composite_norm', 'composite_mean', 'composite_score'],
+                overall: ['overall_score', 'overall_mean', 'overall_percent']
+            };
+            
+            const variants = columnVariants[currentEnergyType] || [];
+            
+            for (const col of variants) {
+                if (props[col] !== undefined && props[col] !== null) {
+                    const value = props[col];
+                    // Convert percentage to 0-1 scale if needed
+                    if (col === 'overall_percent' && value > 1) {
+                        return value / 100;
+                    }
+                    return value;
+                }
+            }
+            
+            return null;
+        }
+        
+        function getClassificationForCurrentType(score) {
+            if (score === null || score === undefined || isNaN(score)) {
+                return 'No Data';
+            }
+            
+            const thresholds = classificationThresholds[currentEnergyType] || classificationThresholds.overall;
+            
+            for (const threshold of thresholds) {
+                if (score <= threshold.max) {
+                    return threshold.label;
+                }
+            }
+            
+            return thresholds[thresholds.length - 1].label;
+        }
+        
+        function getColorForClassification(classification, energyType) {
+            const scheme = colorSchemes[energyType] || colorSchemes.overall;
+            const index = scheme.labels.indexOf(classification);
+            return index >= 0 ? scheme.colors[index] : '#cccccc';
+        }
+        
+        function getColorForScore(score, energyType) {
+            const classification = getClassificationForCurrentType(score);
+            return getColorForClassification(classification, energyType);
+        }
+        
+        function createMapLayer() {
+            // Ensure we have features array
+            const features = currentData.features || 
+                           (currentData.type === 'FeatureCollection' ? currentData.features : [currentData]);
+            
+            geojsonLayer = L.geoJSON({
+                type: 'FeatureCollection',
+                features: features
+            }, {
+                style: getStyleForFeature,
+                onEachFeature: function(feature, layer) {
+                    const props = feature.properties || feature;
+                    const stateName = props.ADM1_EN || props.name || props.STATE || 'Unknown State';
+                    const currentScore = getScoreForCurrentType(props);
+                    const classification = getClassificationForCurrentType(currentScore);
+                    const color = getColorForClassification(classification, currentEnergyType);
+                    
+                    // Add tooltip on hover
+                    layer.bindTooltip(`
+                        <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 5px; color: #2c3e50;">
+                            ${stateName}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                            <div style="width: 12px; height: 12px; background: ${color}; border-radius: 2px;"></div>
+                            <span style="font-weight: 500;">${classification}</span>
+                        </div>
+                        <div style="font-size: 0.9rem; color: #6c757d;">
+                            Click for detailed analysis
+                        </div>
+                    `, {
+                        direction: 'top',
+                        offset: [0, -10],
+                        opacity: 0.95
+                    });
+                    
+                    // Add popup on click
+                    layer.bindPopup(`
+                        <div style="min-width: 280px;">
+                            <h3 style="margin: 0 0 15px 0; color: #2c3e50; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px;">
+                                ${stateName}
+                            </h3>
+                            <div style="background: linear-gradient(135deg, ${color}22, ${color}44); padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+                                <div style="font-size: 2.5rem; font-weight: 700; color: ${color}; margin-bottom: 5px;">
+                                    ${currentScore !== null ? currentScore.toFixed(3) : 'N/A'}
+                                </div>
+                                <div style="font-size: 1rem; color: #6c757d; font-weight: 500;">
+                                    ${currentEnergyType.charAt(0).toUpperCase() + currentEnergyType.slice(1)} Suitability
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    <span style="background: ${color}; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.9rem; font-weight: 500;">
+                                        ${classification}
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="font-size: 0.9rem; color: #6c757d; text-align: center;">
+                                <i class="fas fa-mouse-pointer"></i> Click sidebar for comprehensive analysis
+                            </div>
+                        </div>
+                    `, {
+                        maxWidth: 300,
+                        minWidth: 280,
+                        className: 'custom-popup'
+                    });
+                    
+                    // Click handler for detailed view
+                    layer.on('click', function(e) {
+                        selectedState = feature;
+                        updateStateInfo(feature);
+                        
+                        // Highlight the clicked state
+                        geojsonLayer.eachLayer(function(l) {
+                            l.setStyle({
+                                weight: 1.5,
+                                color: 'rgba(255, 255, 255, 0.9)'
+                            });
+                        });
+                        
+                        e.target.setStyle({
+                            weight: 3,
+                            color: '#2c3e50',
+                            opacity: 1
+                        });
+                        
+                        // Close other popups
+                        layer.closePopup();
+                    });
+                    
+                    // Hover effects
+                    layer.on('mouseover', function(e) {
+                        e.target.setStyle({
+                            weight: 2.5,
+                            color: '#333',
+                            fillOpacity: 0.85
+                        });
+                        e.target.bringToFront();
+                    });
+                    
+                    layer.on('mouseout', function(e) {
+                        if (selectedState && props.ADM1_EN === (selectedState.properties ? selectedState.properties.ADM1_EN : selectedState.ADM1_EN)) {
+                            e.target.setStyle({
+                                weight: 3,
+                                color: '#2c3e50',
+                                opacity: 1
+                            });
+                        } else {
+                            geojsonLayer.resetStyle(e.target);
+                        }
+                    });
+                }
+            }).addTo(map);
+            
+            // Fit bounds to Nigeria
+            if (geojsonLayer.getBounds().isValid()) {
+                map.fitBounds(geojsonLayer.getBounds().pad(0.1));
+            }
+            
+            // Update legend
+            updateLegend();
+            
+            // Show initial instructions
+            setTimeout(() => {
+                if (!selectedState) {
+                    document.getElementById('state-info').style.display = 'block';
+                    document.getElementById('selected-state-name').textContent = 'Nigeria';
+                    document.getElementById('score-value').textContent = 'Click on any state';
+                    document.getElementById('score-label').textContent = 'to begin analysis';
+                    document.getElementById('recommended-energy').innerHTML = '<i class="fas fa-hand-pointer"></i> Select a state';
+                }
+            }, 1000);
+        }
+        
+        function updateLegend() {
+            const legendContent = document.getElementById('legend-content');
+            const scheme = colorSchemes[currentEnergyType] || colorSchemes.overall;
+            const thresholds = classificationThresholds[currentEnergyType] || classificationThresholds.overall;
+            
+            let html = '';
+            
+            for (let i = 0; i < scheme.colors.length; i++) {
+                const color = scheme.colors[i];
+                const label = scheme.labels[i];
+                const min = i === 0 ? 0 : thresholds[i-1].max;
+                const max = thresholds[i].max;
+                
+                let rangeText = '';
+                if (currentEnergyType === 'overall') {
+                    rangeText = `${(min * 100).toFixed(0)}-${(max * 100).toFixed(0)}%`;
+                } else {
+                    rangeText = `${min.toFixed(2)}-${max.toFixed(2)}`;
+                }
+                
+                html += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: ${color};"></div>
+                        <div class="legend-label">${label}</div>
+                        <div class="legend-range">${rangeText}</div>
+                    </div>
+                `;
+            }
+            
+            // Add current view info
+            html += `
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(0, 0, 0, 0.1); font-size: 0.9rem; color: #6c757d;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span><strong>Current View:</strong></span>
+                        <span style="font-weight: 600; color: #667eea;">${currentEnergyType.charAt(0).toUpperCase() + currentEnergyType.slice(1)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span><strong>Data Version:</strong></span>
+                        <span style="font-weight: 600; color: #28a745;">v2.0</span>
+                    </div>
+                </div>
+            `;
+            
+            legendContent.innerHTML = html;
+        }
+        
+        function updateStateInfo(feature) {
+            const props = feature.properties || feature;
+            const stateName = props.ADM1_EN || props.name || props.STATE || 'Unknown State';
+            const currentScore = getScoreForCurrentType(props);
+            const classification = getClassificationForCurrentType(currentScore);
+            const color = getColorForClassification(classification, currentEnergyType);
+            
+            // Update state name
+            document.getElementById('selected-state-name').textContent = stateName;
+            
+            // Update current energy score
+            const scoreElement = document.getElementById('score-value');
+            const scoreLabel = document.getElementById('score-label');
+            const energyScoreDiv = document.getElementById('current-energy-score');
+            
+            if (currentScore !== null && !isNaN(currentScore)) {
+                let displayValue, displayLabel;
+                
+                if (currentEnergyType === 'overall') {
+                    // For overall, show percentage
+                    displayValue = (currentScore * 100).toFixed(1) + '%';
+                    displayLabel = 'Overall Suitability Score';
+                } else {
+                    displayValue = currentScore.toFixed(3);
+                    displayLabel = `${currentEnergyType.charAt(0).toUpperCase() + currentEnergyType.slice(1)} Suitability`;
+                }
+                
+                scoreElement.textContent = displayValue;
+                scoreLabel.textContent = displayLabel;
+                energyScoreDiv.style.background = `linear-gradient(135deg, ${color}22, ${color}44)`;
+                energyScoreDiv.style.color = color;
+            } else {
+                scoreElement.textContent = 'N/A';
+                scoreLabel.textContent = 'No Data Available';
+                energyScoreDiv.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
+                energyScoreDiv.style.color = '#6c757d';
+            }
+            
+            // Update recommended energy
+            const recommended = props.recommended_energy || 'N/A';
+            const recommendedElement = document.getElementById('recommended-energy');
+            recommendedElement.innerHTML = `<i class="fas fa-star"></i><span>Recommended: ${recommended}</span>`;
+            
+            // Update confidence level
+            const confidence = props.confidence_level || 'N/A';
+            const confidenceElement = document.getElementById('confidence-level');
+            const confidenceIcon = document.getElementById('confidence-icon');
+            
+            confidenceElement.textContent = confidence;
+            
+            // Set confidence icon
+            switch(confidence.toLowerCase()) {
+                case 'high':
+                    confidenceIcon.innerHTML = '<i class="fas fa-check-circle" style="color: #28a745;"></i>';
+                    break;
+                case 'medium':
+                    confidenceIcon.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #ffc107;"></i>';
+                    break;
+                case 'low':
+                    confidenceIcon.innerHTML = '<i class="fas fa-info-circle" style="color: #fd7e14;"></i>';
+                    break;
+                case 'very low':
+                    confidenceIcon.innerHTML = '<i class="fas fa-question-circle" style="color: #dc3545;"></i>';
+                    break;
+                default:
+                    confidenceIcon.innerHTML = '<i class="fas fa-minus-circle" style="color: #6c757d;"></i>';
+            }
+            
+            // Show state info panel
+            document.getElementById('state-info').style.display = 'block';
+            
+            // Update chart
+            updateChart(props);
+            
+            // Update energy comparison
+            updateEnergyComparison(props);
+        }
+        
+        function updateChart(props) {
+            const ctx = document.getElementById('suitability-chart').getContext('2d');
+            
+            // Destroy existing chart
+            if (chart) {
+                chart.destroy();
+            }
+            
+            // Get scores (try multiple column names)
+            const solarScore = props.solar_norm || props.solar_mean || 0;
+            const windScore = props.wind_norm || props.wind_mean || 0;
+            const hydroScore = props.hydro_norm || props.hydro_mean || 0;
+            const compositeScore = props.composite_norm || props.composite_mean || 0;
+            const overallScore = props.overall_score || (props.overall_percent ? props.overall_percent / 100 : 0);
+            
+            const energyTypes = ['Solar', 'Wind', 'Hydro', 'Composite', 'Overall'];
+            const scores = [solarScore, windScore, hydroScore, compositeScore, overallScore];
+            
+            const backgroundColors = [
+                getColorForScore(solarScore, 'solar'),
+                getColorForScore(windScore, 'wind'),
+                getColorForScore(hydroScore, 'hydro'),
+                getColorForScore(compositeScore, 'composite'),
+                getColorForScore(overallScore, 'overall')
+            ];
+            
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: energyTypes,
+                    datasets: [{
+                        label: 'Suitability Score',
+                        data: scores,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#2c3e50',
+                            bodyColor: '#495057',
+                            borderColor: '#dee2e6',
+                            borderWidth: 1,
+                            cornerRadius: 6,
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    const label = context.dataset.label;
+                                    let formattedValue;
+                                    
+                                    if (context.dataIndex === 4) { // Overall
+                                        formattedValue = (value * 100).toFixed(1) + '%';
+                                    } else {
+                                        formattedValue = value.toFixed(3);
+                                    }
+                                    
+                                    return `${label}: ${formattedValue}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1.0,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                color: '#6c757d',
+                                callback: function(value) {
+                                    return value.toFixed(1);
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#495057',
+                                font: {
+                                    weight: 500
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+        
+        function updateEnergyComparison(props) {
+            const energyData = [
+                { 
+                    type: 'Solar', 
+                    score: props.solar_norm || props.solar_mean || 0, 
+                    color: getColorForScore(props.solar_norm || props.solar_mean || 0, 'solar'),
+                    icon: '☀️'
+                },
+                { 
+                    type: 'Wind', 
+                    score: props.wind_norm || props.wind_mean || 0, 
+                    color: getColorForScore(props.wind_norm || props.wind_mean || 0, 'wind'),
+                    icon: '💨'
+                },
+                { 
+                    type: 'Hydro', 
+                    score: props.hydro_norm || props.hydro_mean || 0, 
+                    color: getColorForScore(props.hydro_norm || props.hydro_mean || 0, 'hydro'),
+                    icon: '💧'
+                },
+                { 
+                    type: 'Composite', 
+                    score: props.composite_norm || props.composite_mean || 0, 
+                    color: getColorForScore(props.composite_norm || props.composite_mean || 0, 'composite'),
+                    icon: '📊'
+                }
+            ];
+            
+            // Find best energy type (excluding composite)
+            const energyTypes = energyData.filter(e => e.type !== 'Composite');
+            const bestEnergy = energyTypes.reduce((best, current) => 
+                (current.score || 0) > (best.score || 0) ? current : best
+            );
+            
+            let html = '';
+            energyData.forEach(energy => {
+                const isBest = energy.type === bestEnergy.type && energy.type !== 'Composite';
+                const score = energy.score || 0;
+                const classification = getClassificationForCurrentType(score);
+                
+                html += `
+                    <div class="energy-card ${isBest ? 'best' : ''}" style="color: ${energy.color};">
+                        <div class="energy-type">
+                            <span>${energy.icon}</span>
+                            <span>${energy.type}</span>
+                        </div>
+                        <div class="energy-value">${score.toFixed(3)}</div>
+                        <div class="energy-class">${classification}</div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('energy-comparison').innerHTML = html;
+        }
+        
+        function exportCurrentView() {
+            // Dynamically load html2canvas if needed
+            if (typeof html2canvas === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+                script.onload = function() {
+                    captureScreenshot();
+                };
+                document.head.appendChild(script);
+            } else {
+                captureScreenshot();
+            }
+        }
+        
+        function captureScreenshot() {
+            const mapContainer = document.querySelector('.map-container');
+            
+            // Show capturing message
+            const originalText = document.getElementById('loading-text');
+            const originalDetails = document.getElementById('loading-details');
+            const overlay = document.getElementById('loading-overlay');
+            
+            overlay.style.display = 'flex';
+            overlay.style.opacity = '1';
+            updateLoading('Capturing screenshot...', 'Preparing high-quality image export');
+            
+            html2canvas(mapContainer, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const timestamp = new Date().toISOString().slice(0,19).replace(/[:]/g, '-');
+                link.download = `nigeria_renewable_energy_${currentEnergyType}_${timestamp}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                // Hide overlay
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                    }, 500);
+                }, 1000);
+            });
+        }
+        
+        function showMethodology() {
+            alert(`Nigeria Renewable Energy Suitability Analysis v2.0
+
+METHODOLOGY:
+1. Data Collection: Solar, Wind, Hydro, and Composite raster data
+2. Processing: Zonal statistics for 37 Nigerian states
+3. Normalization: Scores converted to 0-1 scale for comparison
+4. Custom Classification: Energy-specific thresholds applied
+5. Weighted Scoring: Solar (40%), Wind (30%), Hydro (20%), Composite (10%)
+6. Analysis: Investment priority and confidence scoring
+
+CLASSIFICATION THRESHOLDS:
+• Solar: Very Low (<0.68), Low (0.68-0.69), Medium (0.69-0.71), High (0.71-0.76), Very High (≥0.76)
+• Wind: Very Low (<0.1), Low (0.1-0.3), Medium (0.3-0.5), High (0.5-0.7), Very High (≥0.7)
+• Hydro: Very Low (<0.17), Low (0.17-0.19), Medium (0.19-0.20), High (0.20-0.21), Very High (≥0.21)
+• Overall: Poor (<10%), Fair (10-30%), Moderate (30-50%), Good (50-70%), Excellent (≥70%)
+
+DATA SOURCES: Processed GIS raster analysis, custom classification algorithms.`);
+        }
+    </script>
+
+    <script>
+// Simple tab switching for your existing map
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all tab buttons
+    const tabButtons = document.querySelectorAll('[id^="tab-"], .tab-button, button[onclick*="switch"]');
+    
+    // If no tabs found by those selectors, look for any clickable tabs
+    if (tabButtons.length === 0) {
+        // Try to find any elements that look like tabs
+        const allElements = document.querySelectorAll('button, a, div[class*="tab"], li[class*="tab"]');
+        tabButtons = Array.from(allElements).filter(el => {
+            return el.textContent && (
+                el.textContent.includes('Solar') ||
+                el.textContent.includes('Wind') ||
+                el.textContent.includes('Hydro') ||
+                el.textContent.includes('Composite') ||
+                el.textContent.includes('Overall')
+            );
+        });
+    }
+    
+    console.log('Found', tabButtons.length, 'tab buttons');
+    
+    // Add click handlers
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const buttonText = this.textContent || this.innerText;
+            console.log('Tab clicked:', buttonText);
+            
+            // You'll need to add the actual layer switching logic here
+            // This depends on how your map layers are structured
+        });
+    });
+    
+    // If we can't find tabs, create simple ones
+    if (tabButtons.length === 0) {
+        createSimpleTabs();
+    }
+});
+
+function createSimpleTabs() {
+    console.log('Creating simple tab controls...');
+    
+    // Create a simple tab container
+    const tabContainer = document.createElement('div');
+    tabContainer.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: white;
+        padding: 10px;
+        border: 2px solid #333;
+        border-radius: 5px;
+        z-index: 1000;
+    `;
+    
+    tabContainer.innerHTML = `
+        <h4 style="margin: 0 0 10px 0;">Switch View:</h4>
+        <button onclick="switchToSolar()" style="margin: 2px; padding: 8px;">☀️ Solar</button>
+        <button onclick="switchToWind()" style="margin: 2px; padding: 8px;">💨 Wind</button>
+        <button onclick="switchToHydro()" style="margin: 2px; padding: 8px;">💧 Hydro</button>
+        <button onclick="switchToComposite()" style="margin: 2px; padding: 8px;">📊 Composite</button>
+        <button onclick="switchToOverall()" style="margin: 2px; padding: 8px;">🏆 Overall</button>
+    `;
+    
+    document.body.appendChild(tabContainer);
+    
+    // Define switching functions
+    window.switchToSolar = function() {
+        console.log('Switching to Solar view');
+        // Call your map's solar layer function
+        if (window.map && window.map.solarLayer) {
+            showOnlyLayer(window.map.solarLayer);
+        }
+    };
+    
+    window.switchToWind = function() {
+        console.log('Switching to Wind view');
+        // Call your map's wind layer function
+        if (window.map && window.map.windLayer) {
+            showOnlyLayer(window.map.windLayer);
+        }
+    };
+    
+    window.switchToHydro = function() {
+        console.log('Switching to Hydro view');
+        // Call your map's hydro layer function
+        if (window.map && window.map.hydroLayer) {
+            showOnlyLayer(window.map.hydroLayer);
+        }
+    };
+    
+    window.switchToComposite = function() {
+        console.log('Switching to Composite view');
+        // Call your map's composite layer function
+        if (window.map && window.map.compositeLayer) {
+            showOnlyLayer(window.map.compositeLayer);
+        }
+    };
+    
+    window.switchToOverall = function() {
+        console.log('Switching to Overall view');
+        // Call your map's overall layer function
+        if (window.map && window.map.overallLayer) {
+            showOnlyLayer(window.map.overallLayer);
+        }
+    };
+    
+    function showOnlyLayer(layerToShow) {
+        // Hide all layers, show only the selected one
+        const allLayers = ['solarLayer', 'windLayer', 'hydroLayer', 'compositeLayer', 'overallLayer'];
+        allLayers.forEach(layerName => {
+            if (window.map[layerName]) {
+                if (window.map.hasLayer(window.map[layerName])) {
+                    window.map.removeLayer(window.map[layerName]);
+                }
+            }
+        });
+        
+        // Add the selected layer
+        if (layerToShow && !window.map.hasLayer(layerToShow)) {
+            window.map.addLayer(layerToShow);
+        }
+    }
+}
+</script>
+
+</body>
+</html>

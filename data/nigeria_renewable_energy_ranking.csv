@@ -1,0 +1,38 @@
+rank,ADM1_EN,overall_percent,overall_class,recommended_energy,investment_priority
+1,Yobe,74.11541204,Good,Wind,High Priority
+2,Katsina,72.35708964,Good,Wind,High Priority
+3,Kano,72.22088684,Good,Wind,High Priority
+4,Borno,71.65948629,Good,Wind,High Priority
+5,Zamfara,71.59327094,Good,Wind,High Priority
+6,Gombe,70.79334764,Good,Wind,High Priority
+7,Sokoto,70.18813378,Good,Wind,High Priority
+8,Kaduna,69.81756397,Good,Wind,Medium Priority
+9,Plateau,69.14998451,Good,Wind,Medium Priority
+10,Jigawa,68.30249903,Good,Wind,Medium Priority
+11,Bauchi,67.87719579,Good,Wind,Medium Priority
+12,Kebbi,59.83050802,Moderate,Solar,Medium Priority
+13,Adamawa,54.46527106,Moderate,Solar,Medium Priority
+14,Benue,53.74494704,Moderate,Solar,Medium Priority
+15,Kwara,51.93309443,Moderate,Solar,Medium Priority
+16,Niger,50.93186248,Moderate,Solar,Medium Priority
+17,Taraba,49.4193569,Moderate,Solar,Medium Priority
+18,Ekiti,47.53533073,Moderate,Solar,Medium Priority
+19,Nasarawa,45.14124544,Moderate,Solar,Low Priority
+20,Kogi,44.62082099,Moderate,Solar,Low Priority
+21,Federal Capital Territory,43.72112892,Moderate,Solar,Low Priority
+22,Oyo,41.9423716,Moderate,Solar,Low Priority
+23,Ebonyi,38.95987845,Low,Solar,Low Priority
+24,Enugu,38.4244461,Low,Solar,Low Priority
+25,Anambra,37.86158548,Low,Solar,Low Priority
+26,Lagos,37.6134093,Low,Solar,Low Priority
+27,Abia,35.73205564,Low,Solar,Low Priority
+28,Osun,35.49229684,Low,Solar,Low Priority
+29,Edo,35.29139833,Low,Solar,Low Priority
+30,Rivers,35.06976053,Low,Solar,Consider Later
+31,Imo,34.89738807,Low,Solar,Consider Later
+32,Ondo,33.77064981,Low,Solar,Consider Later
+33,Cross River,33.73155925,Low,Solar,Consider Later
+34,Delta,33.39168627,Low,Solar,Consider Later
+35,Ogun,32.11135226,Low,Solar,Consider Later
+36,Bayelsa,31.03190632,Low,Solar,Consider Later
+37,Akwa Ibom,30.08414252,Low,Solar,Consider Later
