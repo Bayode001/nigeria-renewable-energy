@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Nigeria Renewable Energy Suitability Map</title>
     
     <!-- Leaflet CSS & JS -->
@@ -22,59 +22,66 @@
             box-sizing: border-box;
         }
         
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            /* Rest of your body styles... */;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
         }
         
-        .energy-tab {
-            /* Add to existing .energy-tab styles */
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            text-rendering: optimizeLegibility;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+        .container {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            position: relative;
         }
         
-        /* Header Styles */
+        /* Header Styles - COMPACT */
         .header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 0.8rem 1.5rem 0.5rem 1.5rem; /* Reduced padding */
+            padding: 0.8rem 1.5rem 0.5rem 1.5rem;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            min-height: 60px; /* Fixed height */
+            min-height: 60px;
         }
         
         .header h1 {
-            font-size: 1.5rem; /* Reduced from 2.0rem */
+            font-size: 1.5rem;
             font-weight: 700;
             color: #2c3e50;
-            margin-bottom: 0.3rem; /* Reduced */
+            margin-bottom: 0.3rem;
             display: flex;
             align-items: center;
-            gap: 10px; /* Reduced from 15px */
+            gap: 10px;
             line-height: 1.2;
         }
         
         .header h1 i {
             color: #667eea;
-            font-size: 1.5rem; /* Reduced from 2.0rem */
+            font-size: 1.5rem;
         }
         
         .header p {
             color: #7f8c8d;
-            font-size: 0.95rem; /* Reduced from 1.1rem */
+            font-size: 0.95rem;
             line-height: 1.6;
             max-width: 800px;
-            margin-bottom: 0.3rem; /* Added to reduce space */
+            margin-bottom: 0.3rem;
         }
         
         .version-badge {
             background: #667eea;
             color: white;
-            padding: 3px 10px; /* Reduced */
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: 0.8rem; /* Reduced from 0.9rem */
+            font-size: 0.8rem;
             font-weight: 600;
             margin-left: 10px;
             vertical-align: middle;
@@ -83,7 +90,7 @@
         /* Main Content Layout */
         .main-content {
             display: flex;
-            height: calc(100vh - 70px); /* Reduced from 140px to 70px */
+            height: calc(100vh - 70px);
             gap: 0;
         }
         
@@ -143,34 +150,40 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Energy Tabs */
+        /* Energy Tabs - FIXED FOR COMPOSITE */
         .energy-tabs {
             display: flex;
-            gap: 8px;
+            gap: 5px;
             margin-bottom: 25px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 8px;
             border-radius: 12px;
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            flex-wrap: nowrap;
         }
         
         .energy-tab {
             flex: 1;
-            padding: 14px 10px;
+            min-width: 0;
+            padding: 12px 6px;
             border: none;
             background: transparent;
             border-radius: 8px;
             cursor: pointer;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             color: #495057;
             position: relative;
             overflow: hidden;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         .energy-tab::before {
@@ -202,14 +215,25 @@
         }
         
         .tab-icon {
-            font-size: 1.4rem !important; /* Reduced from 1.8rem */
+            font-size: 1.4rem;
             z-index: 2;
         }
         
         .tab-text {
-           font-size: 0.78rem !important; /* Even smaller font */
-           font-weight: 600;
-           letter-spacing: 0;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0;
+            z-index: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        
+        /* Fix for Composite tab specifically */
+        .energy-tab[data-type="composite"] .tab-text {
+            font-size: 0.75rem;
+            letter-spacing: -0.3px;
         }
         
         /* Legend */
@@ -562,23 +586,99 @@
         }
         
         @media (max-width: 768px) {
+            /* Fix for mobile viewport height */
+            html, body, .container {
+                height: 100vh !important;
+                overflow: hidden !important;
+                width: 100vw !important;
+            }
+            
+            /* Fixed header */
             .header {
-                padding: 1rem;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 1000 !important;
+                background: rgba(255, 255, 255, 0.98) !important;
+                backdrop-filter: blur(10px) !important;
+                padding: 10px 15px !important;
+                min-height: 60px !important;
             }
             
             .header h1 {
-                font-size: 1.8rem;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
+                font-size: 1.2rem !important;
+                margin-bottom: 5px !important;
+                flex-direction: row !important;
             }
             
+            .header p {
+                display: none !important;
+            }
+            
+            /* Adjust main content for fixed header */
+            .main-content {
+                margin-top: 60px !important;
+                height: calc(100vh - 60px) !important;
+                flex-direction: column;
+            }
+            
+            /* Map container */
+            .map-container {
+                height: 60vh;
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+                position: relative;
+            }
+            
+            #map {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+            
+            /* Sidebar */
+            .sidebar {
+                min-width: 100%;
+                max-width: 100%;
+                max-height: 40vh;
+                overflow-y: auto;
+                padding: 15px;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Energy tabs */
             .energy-tabs {
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding: 8px;
+                gap: 5px;
+                -webkit-overflow-scrolling: touch;
             }
             
             .energy-tab {
-                flex: 1 0 calc(50% - 8px);
+                flex: 0 0 auto;
+                min-width: 85px;
+                padding: 10px 6px;
+                font-size: 0.85rem;
+            }
+            
+            .tab-icon {
+                font-size: 1.4rem !important;
+            }
+            
+            .tab-text {
+                font-size: 0.8rem !important;
+            }
+            
+            .energy-tab[data-type="composite"] .tab-text {
+                font-size: 0.75rem !important;
+                letter-spacing: -0.3px;
             }
             
             .comparison-grid {
@@ -586,10 +686,78 @@
             }
             
             .legend-item {
-                flex-direction: column;
-                text-align: center;
-                gap: 8px;
+                flex-direction: row;
+                text-align: left;
+                gap: 10px;
+                padding: 8px;
+                font-size: 0.85rem;
             }
+            
+            /* State info */
+            .state-info {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .state-name {
+                font-size: 1.3rem;
+            }
+            
+            .energy-score {
+                font-size: 2.5rem;
+                padding: 15px;
+                margin: 10px 0;
+            }
+            
+            /* Chart */
+            .chart-container {
+                padding: 12px;
+                margin: 15px 0;
+            }
+            
+            .suitability-chart {
+                height: 180px;
+            }
+            
+            /* Download buttons */
+            .download-btn {
+                padding: 12px 15px;
+                font-size: 0.9rem;
+            }
+            
+            /* Footer */
+            .footer {
+                font-size: 0.8rem;
+                padding: 10px 0;
+            }
+        }
+        
+        /* iOS Safari specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            .map-container {
+                height: -webkit-fill-available;
+            }
+            
+            .main-content {
+                height: -webkit-fill-available !important;
+            }
+        }
+        
+        /* Prevent text size adjustment */
+        html {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        
+        /* Improve touch targets */
+        button, .energy-tab, .legend-item, .download-btn {
+            min-height: 44px;
+        }
+        
+        /* Prevent blue highlight on tap */
+        * {
+            -webkit-tap-highlight-color: transparent;
         }
         
         /* Tooltip */
@@ -630,7 +798,7 @@
         <div class="header">
             <h1>
                 <i class="fas fa-solar-map"></i>   
-             🌍 Nigeria Renewable Energy Suitability Analysis
+                🌍 Nigeria Renewable Energy Suitability Analysis
             </h1>
             <p>
                 Interactive analysis of Solar, Wind, Hydro, and Composite renewable energy potential across 37 Nigerian states.
@@ -737,7 +905,7 @@
                 
                 <!-- Download Section -->
                 <div class="download-section">
-                    <h4><i class="fas fa-download"></i> Download Data </h4>
+                    <h4><i class="fas fa-download"></i> Download Data</h4>
                     <div class="download-buttons">
                         <a href="nigeria_renewable_energy_analysis_v2.geojson" download class="download-btn">
                             <i class="fas fa-map"></i>
@@ -854,6 +1022,44 @@
             day: 'numeric'
         });
         
+        // Mobile optimization function
+        function initMobileOptimizations() {
+            // Detect if mobile
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                console.log('Mobile device detected, applying optimizations...');
+                
+                // Adjust map for mobile
+                if (map.tap) {
+                    map.tap.disable();
+                }
+                
+                // Hide some elements on mobile to save space
+                const loadingDetails = document.getElementById('loading-details');
+                if (loadingDetails) {
+                    loadingDetails.style.display = 'none';
+                }
+                
+                // Make popups touch-friendly
+                map.options.touchZoom = true;
+                map.zoomControl.setPosition('bottomright');
+                
+                // Fix for iOS Safari 100vh issue
+                function setVH() {
+                    const vh = window.innerHeight * 0.01;
+                    document.documentElement.style.setProperty('--vh', `${vh}px`);
+                }
+                
+                setVH();
+                window.addEventListener('resize', setVH);
+                window.addEventListener('orientationchange', setVH);
+                
+                // Add CSS class for mobile
+                document.body.classList.add('is-mobile');
+            }
+        }
+        
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
@@ -879,6 +1085,9 @@
                     maxZoom: 18,
                     opacity: 0.5
                 }).addTo(map);
+                
+                // Apply mobile optimizations
+                initMobileOptimizations();
                 
                 // Load data
                 loadData();
@@ -957,6 +1166,10 @@
                             overlay.style.transition = 'opacity 0.5s ease';
                             setTimeout(() => {
                                 overlay.style.display = 'none';
+                                // Fix map size after overlay is removed
+                                if (map) {
+                                    map.invalidateSize();
+                                }
                             }, 500);
                         }, 800);
                         
@@ -1549,133 +1762,5 @@ CLASSIFICATION THRESHOLDS:
 DATA SOURCES: Processed GIS raster analysis, custom classification algorithms.`);
         }
     </script>
-
-    <script>
-// Simple tab switching for your existing map
-document.addEventListener('DOMContentLoaded', function() {
-    // Find all tab buttons
-    const tabButtons = document.querySelectorAll('[id^="tab-"], .tab-button, button[onclick*="switch"]');
-    
-    // If no tabs found by those selectors, look for any clickable tabs
-    if (tabButtons.length === 0) {
-        // Try to find any elements that look like tabs
-        const allElements = document.querySelectorAll('button, a, div[class*="tab"], li[class*="tab"]');
-        tabButtons = Array.from(allElements).filter(el => {
-            return el.textContent && (
-                el.textContent.includes('Solar') ||
-                el.textContent.includes('Wind') ||
-                el.textContent.includes('Hydro') ||
-                el.textContent.includes('Composite') ||
-                el.textContent.includes('Overall')
-            );
-        });
-    }
-    
-    console.log('Found', tabButtons.length, 'tab buttons');
-    
-    // Add click handlers
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const buttonText = this.textContent || this.innerText;
-            console.log('Tab clicked:', buttonText);
-            
-            // You'll need to add the actual layer switching logic here
-            // This depends on how your map layers are structured
-        });
-    });
-    
-    // If we can't find tabs, create simple ones
-    if (tabButtons.length === 0) {
-        createSimpleTabs();
-    }
-});
-
-function createSimpleTabs() {
-    console.log('Creating simple tab controls...');
-    
-    // Create a simple tab container
-    const tabContainer = document.createElement('div');
-    tabContainer.style.cssText = `
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: white;
-        padding: 10px;
-        border: 2px solid #333;
-        border-radius: 5px;
-        z-index: 1000;
-    `;
-    
-    tabContainer.innerHTML = `
-        <h4 style="margin: 0 0 10px 0;">Switch View:</h4>
-        <button onclick="switchToSolar()" style="margin: 2px; padding: 8px;">☀️ Solar</button>
-        <button onclick="switchToWind()" style="margin: 2px; padding: 8px;">💨 Wind</button>
-        <button onclick="switchToHydro()" style="margin: 2px; padding: 8px;">💧 Hydro</button>
-        <button onclick="switchToComposite()" style="margin: 2px; padding: 8px;">📊 Composite</button>
-        <button onclick="switchToOverall()" style="margin: 2px; padding: 8px;">🏆 Overall</button>
-    `;
-    
-    document.body.appendChild(tabContainer);
-    
-    // Define switching functions
-    window.switchToSolar = function() {
-        console.log('Switching to Solar view');
-        // Call your map's solar layer function
-        if (window.map && window.map.solarLayer) {
-            showOnlyLayer(window.map.solarLayer);
-        }
-    };
-    
-    window.switchToWind = function() {
-        console.log('Switching to Wind view');
-        // Call your map's wind layer function
-        if (window.map && window.map.windLayer) {
-            showOnlyLayer(window.map.windLayer);
-        }
-    };
-    
-    window.switchToHydro = function() {
-        console.log('Switching to Hydro view');
-        // Call your map's hydro layer function
-        if (window.map && window.map.hydroLayer) {
-            showOnlyLayer(window.map.hydroLayer);
-        }
-    };
-    
-    window.switchToComposite = function() {
-        console.log('Switching to Composite view');
-        // Call your map's composite layer function
-        if (window.map && window.map.compositeLayer) {
-            showOnlyLayer(window.map.compositeLayer);
-        }
-    };
-    
-    window.switchToOverall = function() {
-        console.log('Switching to Overall view');
-        // Call your map's overall layer function
-        if (window.map && window.map.overallLayer) {
-            showOnlyLayer(window.map.overallLayer);
-        }
-    };
-    
-    function showOnlyLayer(layerToShow) {
-        // Hide all layers, show only the selected one
-        const allLayers = ['solarLayer', 'windLayer', 'hydroLayer', 'compositeLayer', 'overallLayer'];
-        allLayers.forEach(layerName => {
-            if (window.map[layerName]) {
-                if (window.map.hasLayer(window.map[layerName])) {
-                    window.map.removeLayer(window.map[layerName]);
-                }
-            }
-        });
-        
-        // Add the selected layer
-        if (layerToShow && !window.map.hasLayer(layerToShow)) {
-            window.map.addLayer(layerToShow);
-        }
-    }
-}
-</script>
-
 </body>
 </html>
