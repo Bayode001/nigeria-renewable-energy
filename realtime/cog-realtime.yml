@@ -1,0 +1,63 @@
+# Cloud Optimized GeoTIFF Configuration for Real-Time Renewable Energy
+server:
+  name: "Nigeria Renewable Energy COG Server"
+  port: 8080
+  workers: 4
+  cors: true
+
+cache:
+  type: "redis"  # Use Redis for real-time caching
+  host: "localhost"
+  port: 6379
+  ttl: 3600  # Cache for 1 hour
+  maxsize: "1GB"
+
+datasets:
+  nigeria_renewable_realtime:
+    path: "https://raw.githubusercontent.com/Bayode001/nigeria-renewable-energy/main/realtime/nigeria_renewable_energy_live.geojson"
+    type: "vector"
+    minzoom: 4
+    maxzoom: 12
+    default_style: "realtime-style.json"
+    refresh:
+      enabled: true
+      interval: 3600  # Refresh every hour
+      strategy: "replace"
+
+  nigeria_satellite:
+    path: "/data/satellite/nigeria.tif"
+    type: "raster"
+    minzoom: 4
+    maxzoom: 15
+    resampling: "bilinear"
+
+tiles:
+  format: "pbf"  # Protocol Buffer Format for vector tiles
+  compression: true
+  buffer: 128
+  extent: 4096
+
+api:
+  enabled: true
+  endpoints:
+    - "/health"
+    - "/metrics"
+    - "/update-status"
+    - "/data-sources"
+
+monitoring:
+  enabled: true
+  metrics:
+    - "request_count"
+    - "response_time"
+    - "cache_hit_rate"
+    - "data_freshness"
+  alerts:
+    - type: "data_stale"
+      threshold: 7200  # Alert if data > 2 hours old
+      channels: ["email", "slack"]
+
+logging:
+  level: "info"
+  format: "json"
+  output: "/var/log/cog-server.log"

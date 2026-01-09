@@ -1,0 +1,66 @@
+{
+  "name": "Nigeria Real-Time Renewable Energy Potential",
+  "description": "Real-time solar, wind, and hydro energy potential across Nigerian states",
+  "version": "1.0.0",
+  "type": "vector",
+  "sources": {
+    "nigeria-realtime": {
+      "type": "vector",
+      "url": "https://raw.githubusercontent.com/Bayode001/nigeria-renewable-energy/main/realtime/nigeria_renewable_energy_live.geojson",
+      "refresh": {
+        "interval": 3600,
+        "update_strategy": "replace"
+      }
+    }
+  },
+  "layers": [
+    {
+      "id": "nigeria-states-realtime",
+      "type": "fill",
+      "source": "nigeria-realtime",
+      "source-layer": "nigeria_renewable_energy_live",
+      "paint": {
+        "fill-color": [
+          "interpolate",
+          ["linear"],
+          ["get", "composite_norm"],
+          0, "#ffeda0",
+          0.2, "#fed976",
+          0.4, "#feb24c",
+          0.6, "#fd8d3c",
+          0.8, "#fc4e2a",
+          1.0, "#e31a1c"
+        ],
+        "fill-opacity": 0.8,
+        "fill-outline-color": "#555555"
+      },
+      "filter": ["==", "$type", "Polygon"]
+    },
+    {
+      "id": "state-labels",
+      "type": "symbol",
+      "source": "nigeria-realtime",
+      "source-layer": "nigeria_renewable_energy_live",
+      "layout": {
+        "text-field": ["get", "ADM1_EN"],
+        "text-font": ["Open Sans Bold"],
+        "text-size": 12,
+        "text-transform": "uppercase"
+      },
+      "paint": {
+        "text-color": "#000000",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 1
+      }
+    }
+  ],
+  "metadata": {
+    "data_source": "Real-time API integration via n8n workflow",
+    "update_frequency": "Hourly",
+    "last_updated": "auto",
+    "data_components": ["Solar (NASA POWER)", "Wind (Open-Meteo)", "Hydro (Local Analysis)"],
+    "weights": "Solar: 45%, Wind: 35%, Hydro: 20%",
+    "normalization": "Nigeria-specific ranges",
+    "maintainer": "Nigeria Renewable Energy Monitoring System"
+  }
+}

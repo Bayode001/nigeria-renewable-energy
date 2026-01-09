@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nigeria Real-Time Renewable Energy Dashboard</title>
+    
+    <!-- Map Libraries -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    
+    <!-- Chart Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- UI Framework -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        
+        .dashboard-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            pointer-events: auto;
+        }
+        
+        .data-panel {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 320px;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-live { background-color: #4CAF50; animation: pulse 2s infinite; }
+        .status-stale { background-color: #FF9800; }
+        .status-offline { background-color: #F44336; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .chart-container {
+            height: 200px;
+            margin: 10px 0;
+        }
+        
+        .last-updated {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Map -->
+    <div id="map"></div>
+    
+    <!-- Top Dashboard -->
+    <div class="dashboard-container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <h4>🌍 Nigeria Renewable Energy</h4>
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-live"></span>
+                        <span id="data-status">Live Data Streaming</span>
+                    </div>
+                    <div class="last-updated" id="last-updated">Last updated: Loading...</div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="dashboard-card">
+                    <div class="row">
+                        <div class="col-4">
+                            <h6>Solar Potential</h6>
+                            <div class="d-flex align-items-center">
+                                <div id="solar-gauge" class="gauge"></div>
+                                <span id="solar-value" class="ms-2 fs-4">--</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <h6>Wind Potential</h6>
+                            <div class="d-flex align-items-center">
+                                <div id="wind-gauge" class="gauge"></div>
+                                <span id="wind-value" class="ms-2 fs-4">--</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <h6>Hydro Potential</h6>
+                            <div class="d-flex align-items-center">
+                                <div id="hydro-gauge" class="gauge"></div>
+                                <span id="hydro-value" class="ms-2 fs-4">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Side Panel -->
+    <div class="data-panel">
+        <div class="dashboard-card">
+            <h5>Selected State Analysis</h5>
+            <div id="state-info" class="mb-3">
+                <p class="text-muted">Click on a state to view details</p>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="energy-chart"></canvas>
+            </div>
+            
+            <div class="mt-3">
+                <h6>Recommended Energy Source</h6>
+                <div id="recommended-energy" class="alert alert-info">Select a state</div>
+            </div>
+            
+            <div class="mt-3">
+                <h6>Data Sources</h6>
+                <ul class="list-unstyled small">
+                    <li>🌞 Solar: <span id="solar-source">NASA POWER API</span></li>
+                    <li>💨 Wind: <span id="wind-source">Open-Meteo API</span></li>
+                    <li>💧 Hydro: <span id="hydro-source">Local Analysis</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Legend -->
+    <div class="legend">
+        <h6>Energy Potential Index</h6>
+        <div class="legend-item"><div class="legend-color" style="background-color: #ffeda0;"></div><span>Very Low (0-0.2)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #fed976;"></div><span>Low (0.2-0.4)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #feb24c;"></div><span>Medium (0.4-0.6)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #fd8d3c;"></div><span>High (0.6-0.8)</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #fc4e2a;"></div><span>Very High (0.8-1.0)</span></div>
+    </div>
+    
+    <script>
+        // Mapbox Access Token
+        mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+        
+        // Initialize Map
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [8.6753, 9.0820], // Nigeria center
+            zoom: 5.5
+        });
+        
+        // Data URLs
+        const GEOJSON_URL = 'https://raw.githubusercontent.com/Bayode001/nigeria-renewable-energy/main/realtime/nigeria_renewable_energy_live.geojson';
+        const STATUS_URL = 'https://raw.githubusercontent.com/Bayode001/nigeria-renewable-energy/main/realtime/status.json';
+        
+        // State variables
+        let currentState = null;
+        let energyChart = null;
+        
+        // Load GeoJSON data
+        async function loadData() {
+            try {
+                const response = await fetch(GEOJSON_URL + '?t=' + Date.now());
+                const data = await response.json();
+                
+                // Update last updated time
+                const lastUpdated = data.metadata?.generated || new Date().toISOString();
+                document.getElementById('last-updated').textContent = 
+                    `Last updated: ${new Date(lastUpdated).toLocaleString()}`;
+                
+                // Update data sources
+                if (data.metadata?.data_sources) {
+                    document.getElementById('solar-source').textContent = data.metadata.data_sources.solar || 'NASA POWER API';
+                    document.getElementById('wind-source').textContent = data.metadata.data_sources.wind || 'Open-Meteo API';
+                    document.getElementById('hydro-source').textContent = data.metadata.data_sources.hydro || 'Local Analysis';
+                }
+                
+                // Update national averages
+                if (data.metadata?.national_scores) {
+                    updateGauges(data.metadata.national_scores);
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('data-status').innerHTML = 
+                    '<span class="status-indicator status-stale"></span>Data Load Error';
+                return null;
+            }
+        }
+        
+        // Update gauges
+        function updateGauges(scores) {
+            document.getElementById('solar-value').textContent = (scores.solar * 100).toFixed(1) + '%';
+            document.getElementById('wind-value').textContent = (scores.wind * 100).toFixed(1) + '%';
+            document.getElementById('hydro-value').textContent = (scores.hydro * 100).toFixed(1) + '%';
+            
+            // Simple gauge visualization
+            updateGauge('solar-gauge', scores.solar);
+            updateGauge('wind-gauge', scores.wind);
+            updateGauge('hydro-gauge', scores.hydro);
+        }
+        
+        function updateGauge(elementId, value) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div style="width: 60px; height: 30px; background: #e0e0e0; border-radius: 15px; overflow: hidden;">
+                    <div style="width: ${value * 60}px; height: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A);"></div>
+                </div>
+            `;
+        }
+        
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('energy-chart').getContext('2d');
+            energyChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Solar', 'Wind', 'Hydro'],
+                    datasets: [{
+                        label: 'Energy Potential',
+                        data: [0, 0, 0],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: {
+                                stepSize: 0.2
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        // Handle map clicks
+        function setupMapInteractions(data) {
+            map.on('click', 'nigeria-states-realtime', (e) => {
+                const feature = e.features[0];
+                currentState = feature.properties;
+                
+                // Update state info
+                document.getElementById('state-info').innerHTML = `
+                    <h4>${feature.properties.ADM1_EN}</h4>
+                    <p><strong>Overall Score:</strong> ${(feature.properties.composite_norm * 100).toFixed(1)}%</p>
+                    <p><strong>Solar:</strong> ${feature.properties.solar_class} (${(feature.properties.solar_norm * 100).toFixed(1)}%)</p>
+                    <p><strong>Wind:</strong> ${feature.properties.wind_class} (${(feature.properties.wind_norm * 100).toFixed(1)}%)</p>
+                    <p><strong>Hydro:</strong> ${feature.properties.hydro_class} (${(feature.properties.hydro_norm * 100).toFixed(1)}%)</p>
+                `;
+                
+                // Update chart
+                energyChart.data.datasets[0].data = [
+                    feature.properties.solar_norm,
+                    feature.properties.wind_norm,
+                    feature.properties.hydro_norm
+                ];
+                energyChart.update();
+                
+                // Update recommendation
+                document.getElementById('recommended-energy').innerHTML = `
+                    <strong>${feature.properties.recommended_energy}</strong> energy is recommended for this region
+                    <br><small>Confidence: ${feature.properties.confidence_level}</small>
+                `;
+                
+                // Highlight selected state
+                map.setFeatureState(
+                    { source: 'nigeria-realtime', id: feature.id },
+                    { selected: true }
+                );
+            });
+            
+            // Reset state on click elsewhere
+            map.on('click', () => {
+                if (currentState) {
+                    map.setFeatureState(
+                        { source: 'nigeria-realtime', id: currentState.id },
+                        { selected: false }
+                    );
+                    currentState = null;
+                }
+            });
+        }
+        
+        // Load data on map load
+        map.on('load', async () => {
+            // Add GeoJSON source
+            const data = await loadData();
+            
+            if (data) {
+                map.addSource('nigeria-realtime', {
+                    type: 'geojson',
+                    data: data,
+                    generateId: true
+                });
+                
+                // Add layers
+                map.addLayer({
+                    id: 'nigeria-states-realtime',
+                    type: 'fill',
+                    source: 'nigeria-realtime',
+                    paint: {
+                        'fill-color': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'composite_norm'],
+                            0, '#ffeda0',
+                            0.2, '#fed976',
+                            0.4, '#feb24c',
+                            0.6, '#fd8d3c',
+                            0.8, '#fc4e2a',
+                            1.0, '#e31a1c'
+                        ],
+                        'fill-opacity': [
+                            'case',
+                            ['boolean', ['feature-state', 'selected'], false],
+                            0.9,
+                            0.7
+                        ],
+                        'fill-outline-color': '#555555'
+                    }
+                });
+                
+                // Add state labels
+                map.addLayer({
+                    id: 'state-labels',
+                    type: 'symbol',
+                    source: 'nigeria-realtime',
+                    layout: {
+                        'text-field': ['get', 'ADM1_EN'],
+                        'text-font': ['Open Sans Bold'],
+                        'text-size': 11,
+                        'text-transform': 'uppercase'
+                    },
+                    paint: {
+                        'text-color': '#000000',
+                        'text-halo-color': '#ffffff',
+                        'text-halo-width': 1
+                    }
+                });
+                
+                // Setup interactions
+                setupMapInteractions(data);
+                
+                // Initialize chart
+                initChart();
+                
+                // Auto-refresh every 5 minutes
+                setInterval(async () => {
+                    console.log('Refreshing data...');
+                    const newData = await loadData();
+                    if (newData) {
+                        map.getSource('nigeria-realtime').setData(newData);
+                    }
+                }, 300000); // 5 minutes
+            }
+        });
+        
+        // Handle errors
+        map.on('error', (e) => {
+            console.error('Map error:', e);
+        });
+    </script>
+</body>
+</html>
