@@ -2,144 +2,356 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Nigeria Real-Time Renewable Energy Dashboard</title>
     
-    <!-- Map Libraries -->
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <!-- Leaflet (OpenStreetMap) - Mobile Friendly -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
     
     <!-- Chart Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- UI Framework -->
+    <!-- Bootstrap for Responsive Layout -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
         
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+        }
+        
+        /* Map Container */
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        /* Top Dashboard - Mobile Responsive */
         .dashboard-container {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
             pointer-events: none;
+            padding: 10px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%);
+            backdrop-filter: blur(5px);
         }
         
         .dashboard-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 12px;
             padding: 15px;
             margin-bottom: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             pointer-events: auto;
+            border: 1px solid rgba(0,0,0,0.1);
         }
         
+        /* Side Panel - Mobile Responsive */
         .data-panel {
             position: absolute;
             right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 320px;
+            top: 200px;
+            width: 95%;
+            max-width: 350px;
             z-index: 1000;
             pointer-events: auto;
+            transition: transform 0.3s ease;
         }
         
+        @media (max-width: 768px) {
+            .data-panel {
+                top: auto;
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                width: auto;
+                max-width: none;
+                max-height: 40vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .dashboard-container {
+                padding: 8px;
+            }
+            
+            .dashboard-card {
+                padding: 12px;
+            }
+        }
+        
+        /* Mobile Controls */
+        .mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .mobile-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: white;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        /* Legend - Mobile Responsive */
         .legend {
             position: absolute;
-            bottom: 30px;
-            left: 10px;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 200px;
+            backdrop-filter: blur(5px);
+        }
+        
+        @media (max-width: 768px) {
+            .legend {
+                bottom: 80px;
+                right: 10px;
+                max-width: 180px;
+                font-size: 14px;
+            }
+            
+            .mobile-controls {
+                bottom: 80px;
+                left: 10px;
+            }
         }
         
         .legend-item {
             display: flex;
             align-items: center;
-            margin: 5px 0;
+            margin: 6px 0;
+            font-size: 13px;
         }
         
         .legend-color {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
             border-radius: 3px;
+            flex-shrink: 0;
         }
         
+        /* Status Indicators */
         .status-indicator {
             display: inline-block;
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            margin-right: 5px;
+            margin-right: 8px;
+            vertical-align: middle;
         }
         
-        .status-live { background-color: #4CAF50; animation: pulse 2s infinite; }
+        .status-live { 
+            background-color: #4CAF50; 
+            animation: pulse 2s infinite; 
+        }
         .status-stale { background-color: #FF9800; }
         .status-offline { background-color: #F44336; }
         
         @keyframes pulse {
             0% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.6; }
             100% { opacity: 1; }
         }
         
+        /* Charts */
         .chart-container {
             height: 200px;
+            margin: 15px 0;
+            position: relative;
+        }
+        
+        /* Gauge Styles */
+        .gauge-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin: 10px 0;
         }
         
-        .last-updated {
-            font-size: 12px;
-            color: #666;
-            font-style: italic;
+        .gauge {
+            flex: 1;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-right: 10px;
+        }
+        
+        .gauge-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            background: white;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: flex;
+            }
+            
+            .data-panel.collapsed {
+                transform: translateX(100%);
+            }
+        }
+        
+        /* Touch-friendly elements */
+        button, .btn, [role="button"] {
+            min-height: 44px;
+            min-width: 44px;
+        }
+        
+        /* Prevent text selection on mobile */
+        .no-select {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        /* Loading State */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        /* High DPI Screens */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .dashboard-card, .legend {
+                border: 0.5px solid rgba(0,0,0,0.1);
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Mobile Menu Button -->
+    <div class="mobile-menu-btn" id="menu-toggle">
+        <i class="fas fa-chart-bar"></i>
+    </div>
+    
     <!-- Main Map -->
     <div id="map"></div>
     
+    <!-- Loading Indicator -->
+    <div class="loading" id="loading" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 mb-0">Loading renewable energy data...</p>
+    </div>
+    
     <!-- Top Dashboard -->
     <div class="dashboard-container">
-        <div class="row">
-            <div class="col-md-4">
+        <div class="row g-2">
+            <div class="col-12 col-md-4">
                 <div class="dashboard-card">
-                    <h4>🌍 Nigeria Renewable Energy</h4>
-                    <div class="d-flex align-items-center">
+                    <h5 class="mb-2"><i class="fas fa-solar-panel me-2"></i>Nigeria Renewable Energy</h5>
+                    <div class="d-flex align-items-center mb-2">
                         <span class="status-indicator status-live"></span>
                         <span id="data-status">Live Data Streaming</span>
                     </div>
-                    <div class="last-updated" id="last-updated">Last updated: Loading...</div>
+                    <div class="last-updated" id="last-updated">
+                        <small><i class="fas fa-sync-alt me-1"></i>Last updated: Loading...</small>
+                    </div>
                 </div>
             </div>
             
-            <div class="col-md-8">
+            <div class="col-12 col-md-8">
                 <div class="dashboard-card">
-                    <div class="row">
+                    <div class="row g-2">
                         <div class="col-4">
-                            <h6>Solar Potential</h6>
-                            <div class="d-flex align-items-center">
-                                <div id="solar-gauge" class="gauge"></div>
-                                <span id="solar-value" class="ms-2 fs-4">--</span>
+                            <h6 class="text-center mb-2"><i class="fas fa-sun text-warning"></i> Solar</h6>
+                            <div class="gauge-container">
+                                <div class="gauge">
+                                    <div id="solar-gauge-fill" class="gauge-fill" style="width: 0%; background: linear-gradient(90deg, #FFD700, #FFA500);"></div>
+                                </div>
+                                <span id="solar-value" class="fw-bold fs-5">--%</span>
                             </div>
                         </div>
                         <div class="col-4">
-                            <h6>Wind Potential</h6>
-                            <div class="d-flex align-items-center">
-                                <div id="wind-gauge" class="gauge"></div>
-                                <span id="wind-value" class="ms-2 fs-4">--</span>
+                            <h6 class="text-center mb-2"><i class="fas fa-wind text-info"></i> Wind</h6>
+                            <div class="gauge-container">
+                                <div class="gauge">
+                                    <div id="wind-gauge-fill" class="gauge-fill" style="width: 0%; background: linear-gradient(90deg, #87CEEB, #4682B4);"></div>
+                                </div>
+                                <span id="wind-value" class="fw-bold fs-5">--%</span>
                             </div>
                         </div>
                         <div class="col-4">
-                            <h6>Hydro Potential</h6>
-                            <div class="d-flex align-items-center">
-                                <div id="hydro-gauge" class="gauge"></div>
-                                <span id="hydro-value" class="ms-2 fs-4">--</span>
+                            <h6 class="text-center mb-2"><i class="fas fa-water text-primary"></i> Hydro</h6>
+                            <div class="gauge-container">
+                                <div class="gauge">
+                                    <div id="hydro-gauge-fill" class="gauge-fill" style="width: 0%; background: linear-gradient(90deg, #1E90FF, #0000CD);"></div>
+                                </div>
+                                <span id="hydro-value" class="fw-bold fs-5">--%</span>
                             </div>
                         </div>
                     </div>
@@ -149,11 +361,19 @@
     </div>
     
     <!-- Side Panel -->
-    <div class="data-panel">
+    <div class="data-panel collapsed" id="data-panel">
         <div class="dashboard-card">
-            <h5>Selected State Analysis</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5><i class="fas fa-map-marker-alt me-2"></i>State Analysis</h5>
+                <button class="btn btn-sm btn-outline-secondary d-md-none" id="close-panel">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
             <div id="state-info" class="mb-3">
-                <p class="text-muted">Click on a state to view details</p>
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Tap on any state to view details
+                </div>
             </div>
             
             <div class="chart-container">
@@ -161,67 +381,179 @@
             </div>
             
             <div class="mt-3">
-                <h6>Recommended Energy Source</h6>
-                <div id="recommended-energy" class="alert alert-info">Select a state</div>
+                <h6><i class="fas fa-lightbulb me-2"></i>Recommended Energy</h6>
+                <div id="recommended-energy" class="alert alert-warning mb-0">
+                    Select a state to see recommendations
+                </div>
             </div>
             
             <div class="mt-3">
-                <h6>Data Sources</h6>
-                <ul class="list-unstyled small">
-                    <li>🌞 Solar: <span id="solar-source">NASA POWER API</span></li>
-                    <li>💨 Wind: <span id="wind-source">Open-Meteo API</span></li>
-                    <li>💧 Hydro: <span id="hydro-source">Local Analysis</span></li>
-                </ul>
+                <h6><i class="fas fa-database me-2"></i>Data Sources</h6>
+                <div class="row small">
+                    <div class="col-4">
+                        <div class="text-center">
+                            <i class="fas fa-sun text-warning d-block fs-5"></i>
+                            <span id="solar-source">NASA</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <i class="fas fa-wind text-info d-block fs-5"></i>
+                            <span id="wind-source">Open-Meteo</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <i class="fas fa-water text-primary d-block fs-5"></i>
+                            <span id="hydro-source">Local</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
     <!-- Legend -->
-    <div class="legend">
-        <h6>Energy Potential Index</h6>
-        <div class="legend-item"><div class="legend-color" style="background-color: #ffeda0;"></div><span>Very Low (0-0.2)</span></div>
-        <div class="legend-item"><div class="legend-color" style="background-color: #fed976;"></div><span>Low (0.2-0.4)</span></div>
-        <div class="legend-item"><div class="legend-color" style="background-color: #feb24c;"></div><span>Medium (0.4-0.6)</span></div>
-        <div class="legend-item"><div class="legend-color" style="background-color: #fd8d3c;"></div><span>High (0.6-0.8)</span></div>
-        <div class="legend-item"><div class="legend-color" style="background-color: #fc4e2a;"></div><span>Very High (0.8-1.0)</span></div>
+    <div class="legend no-select">
+        <h6 class="mb-2"><i class="fas fa-layer-group me-2"></i>Energy Potential</h6>
+        <div class="legend-item"><div class="legend-color" style="background-color: #ffeda0;"></div><span>Very Low</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #fed976;"></div><span>Low</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #feb24c;"></div><span>Medium</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #fd8d3c;"></div><span>High</span></div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #fc4e2a;"></div><span>Very High</span></div>
+    </div>
+    
+    <!-- Mobile Controls -->
+    <div class="mobile-controls no-select">
+        <div class="mobile-btn" id="zoom-in" title="Zoom In">
+            <i class="fas fa-plus"></i>
+        </div>
+        <div class="mobile-btn" id="zoom-out" title="Zoom Out">
+            <i class="fas fa-minus"></i>
+        </div>
+        <div class="mobile-btn" id="locate-me" title="My Location">
+            <i class="fas fa-location-arrow"></i>
+        </div>
+        <div class="mobile-btn" id="reset-view" title="Reset View">
+            <i class="fas fa-globe-africa"></i>
+        </div>
     </div>
     
     <script>
-        // Mapbox Access Token
-        //mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+        // Initialize Map with OpenStreetMap (No API Token Needed)
+        const map = L.map('map', {
+            zoomControl: false, // We'll add custom controls
+            touchZoom: true,
+            scrollWheelZoom: true,
+            doubleClickZoom: true,
+            boxZoom: true,
+            keyboard: true,
+            dragging: true,
+            attributionControl: true,
+            fadeAnimation: true,
+            zoomAnimation: true
+        }).setView([9.0820, 8.6753], 6); // Nigeria coordinates
         
-        // Initialize Map
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/light-v11',
-            center: [8.6753, 9.0820], // Nigeria center
-            zoom: 5.5
-        });
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            detectRetina: true // Better tiles for high DPI screens
+        }).addTo(map);
+        
+        // Add custom zoom control
+        L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
         
         // Data URLs
-        const GEOJSON_URL ='https://Bayode001.github.io/nigeria-renewable-energy/realtime/nigeria_renewable_energy_live.geojson';
+        const GEOJSON_URL = 'https://Bayode001.github.io/nigeria-renewable-energy/realtime/nigeria_renewable_energy_live.geojson';
         const STATUS_URL = 'https://Bayode001.github.io/nigeria-renewable-energy/realtime/status.json';
         
         // State variables
         let currentState = null;
         let energyChart = null;
+        let geojsonLayer = null;
+        
+        // Mobile detection
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Initialize mobile-friendly interactions
+        function initMobileControls() {
+            // Zoom in
+            document.getElementById('zoom-in').addEventListener('click', () => {
+                map.zoomIn();
+            });
+            
+            // Zoom out
+            document.getElementById('zoom-out').addEventListener('click', () => {
+                map.zoomOut();
+            });
+            
+            // Reset view
+            document.getElementById('reset-view').addEventListener('click', () => {
+                map.setView([9.0820, 8.6753], 6);
+            });
+            
+            // Locate me
+            document.getElementById('locate-me').addEventListener('click', () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        map.setView([position.coords.latitude, position.coords.longitude], 10);
+                    }, (error) => {
+                        alert('Unable to get your location. Please enable location services.');
+                    });
+                } else {
+                    alert('Geolocation is not supported by your browser.');
+                }
+            });
+            
+            // Mobile menu toggle
+            const menuToggle = document.getElementById('menu-toggle');
+            const dataPanel = document.getElementById('data-panel');
+            const closePanel = document.getElementById('close-panel');
+            
+            menuToggle.addEventListener('click', () => {
+                dataPanel.classList.toggle('collapsed');
+                menuToggle.innerHTML = dataPanel.classList.contains('collapsed') 
+                    ? '<i class="fas fa-chart-bar"></i>' 
+                    : '<i class="fas fa-times"></i>';
+            });
+            
+            closePanel.addEventListener('click', () => {
+                dataPanel.classList.add('collapsed');
+                menuToggle.innerHTML = '<i class="fas fa-chart-bar"></i>';
+            });
+            
+            // Adjust panel position on mobile
+            if (isMobile) {
+                map.on('click', () => {
+                    // Auto-open panel when state is selected (handled elsewhere)
+                });
+            }
+        }
         
         // Load GeoJSON data
         async function loadData() {
             try {
+                document.getElementById('loading').style.display = 'block';
+                
                 const response = await fetch(GEOJSON_URL + '?t=' + Date.now());
                 const data = await response.json();
                 
                 // Update last updated time
                 const lastUpdated = data.metadata?.generated || new Date().toISOString();
-                document.getElementById('last-updated').textContent = 
-                    `Last updated: ${new Date(lastUpdated).toLocaleString()}`;
+                document.getElementById('last-updated').innerHTML = 
+                    `<small><i class="fas fa-sync-alt me-1"></i>Last updated: ${new Date(lastUpdated).toLocaleTimeString()}</small>`;
                 
                 // Update data sources
                 if (data.metadata?.data_sources) {
-                    document.getElementById('solar-source').textContent = data.metadata.data_sources.solar || 'NASA POWER API';
-                    document.getElementById('wind-source').textContent = data.metadata.data_sources.wind || 'Open-Meteo API';
-                    document.getElementById('hydro-source').textContent = data.metadata.data_sources.hydro || 'Local Analysis';
+                    document.getElementById('solar-source').textContent = 
+                        data.metadata.data_sources.solar?.split(' ')[0] || 'NASA';
+                    document.getElementById('wind-source').textContent = 
+                        data.metadata.data_sources.wind?.split(' ')[0] || 'Open-Meteo';
+                    document.getElementById('hydro-source').textContent = 
+                        data.metadata.data_sources.hydro?.split(' ')[0] || 'Local';
                 }
                 
                 // Update national averages
@@ -229,34 +561,31 @@
                     updateGauges(data.metadata.national_scores);
                 }
                 
+                document.getElementById('loading').style.display = 'none';
                 return data;
             } catch (error) {
                 console.error('Error loading data:', error);
                 document.getElementById('data-status').innerHTML = 
                     '<span class="status-indicator status-stale"></span>Data Load Error';
+                document.getElementById('loading').style.display = 'none';
                 return null;
             }
         }
         
         // Update gauges
         function updateGauges(scores) {
-            document.getElementById('solar-value').textContent = (scores.solar * 100).toFixed(1) + '%';
-            document.getElementById('wind-value').textContent = (scores.wind * 100).toFixed(1) + '%';
-            document.getElementById('hydro-value').textContent = (scores.hydro * 100).toFixed(1) + '%';
+            const solarValue = (scores.solar * 100).toFixed(1);
+            const windValue = (scores.wind * 100).toFixed(1);
+            const hydroValue = (scores.hydro * 100).toFixed(1);
             
-            // Simple gauge visualization
-            updateGauge('solar-gauge', scores.solar);
-            updateGauge('wind-gauge', scores.wind);
-            updateGauge('hydro-gauge', scores.hydro);
-        }
-        
-        function updateGauge(elementId, value) {
-            const element = document.getElementById(elementId);
-            element.innerHTML = `
-                <div style="width: 60px; height: 30px; background: #e0e0e0; border-radius: 15px; overflow: hidden;">
-                    <div style="width: ${value * 60}px; height: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A);"></div>
-                </div>
-            `;
+            document.getElementById('solar-value').textContent = solarValue + '%';
+            document.getElementById('wind-value').textContent = windValue + '%';
+            document.getElementById('hydro-value').textContent = hydroValue + '%';
+            
+            // Update gauge fills
+            document.getElementById('solar-gauge-fill').style.width = solarValue + '%';
+            document.getElementById('wind-gauge-fill').style.width = windValue + '%';
+            document.getElementById('hydro-gauge-fill').style.width = hydroValue + '%';
         }
         
         // Initialize chart
@@ -269,154 +598,248 @@
                     datasets: [{
                         label: 'Energy Potential',
                         data: [0, 0, 0],
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                        borderColor: 'rgba(255, 152, 0, 1)',
                         borderWidth: 2,
-                        pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+                        pointBackgroundColor: 'rgba(255, 152, 0, 1)',
+                        pointRadius: 4
                     }]
                 },
                 options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         r: {
                             beginAtZero: true,
                             max: 1,
                             ticks: {
-                                stepSize: 0.2
+                                stepSize: 0.2,
+                                backdropColor: 'transparent'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            },
+                            angleLines: {
+                                color: 'rgba(0,0,0,0.1)'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 12
+                                }
                             }
                         }
                     },
-                    responsive: true,
-                    maintainAspectRatio: false
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
             });
         }
         
-        // Handle map clicks
-        function setupMapInteractions(data) {
-            map.on('click', 'nigeria-states-realtime', (e) => {
-                const feature = e.features[0];
-                currentState = feature.properties;
-                
-                // Update state info
-                document.getElementById('state-info').innerHTML = `
-                    <h4>${feature.properties.ADM1_EN}</h4>
-                    <p><strong>Overall Score:</strong> ${(feature.properties.composite_norm * 100).toFixed(1)}%</p>
-                    <p><strong>Solar:</strong> ${feature.properties.solar_class} (${(feature.properties.solar_norm * 100).toFixed(1)}%)</p>
-                    <p><strong>Wind:</strong> ${feature.properties.wind_class} (${(feature.properties.wind_norm * 100).toFixed(1)}%)</p>
-                    <p><strong>Hydro:</strong> ${feature.properties.hydro_class} (${(feature.properties.hydro_norm * 100).toFixed(1)}%)</p>
-                `;
-                
-                // Update chart
-                energyChart.data.datasets[0].data = [
-                    feature.properties.solar_norm,
-                    feature.properties.wind_norm,
-                    feature.properties.hydro_norm
-                ];
-                energyChart.update();
-                
-                // Update recommendation
-                document.getElementById('recommended-energy').innerHTML = `
-                    <strong>${feature.properties.recommended_energy}</strong> energy is recommended for this region
-                    <br><small>Confidence: ${feature.properties.confidence_level}</small>
-                `;
-                
-                // Highlight selected state
-                map.setFeatureState(
-                    { source: 'nigeria-realtime', id: feature.id },
-                    { selected: true }
-                );
+        // Style function for GeoJSON
+        function getStateStyle(feature) {
+            const score = feature.properties.composite_norm || 0;
+            
+            // Color based on composite score
+            let color = '#ffeda0'; // Very Low
+            if (score >= 0.2 && score < 0.4) color = '#fed976'; // Low
+            else if (score >= 0.4 && score < 0.6) color = '#feb24c'; // Medium
+            else if (score >= 0.6 && score < 0.8) color = '#fd8d3c'; // High
+            else if (score >= 0.8) color = '#fc4e2a'; // Very High
+            
+            return {
+                fillColor: color,
+                weight: 1,
+                opacity: 0.8,
+                color: '#333',
+                dashArray: '',
+                fillOpacity: 0.7
+            };
+        }
+        
+        // Highlight state on hover
+        function highlightFeature(e) {
+            const layer = e.target;
+            layer.setStyle({
+                weight: 3,
+                color: '#666',
+                dashArray: '',
+                fillOpacity: 0.9
             });
             
-            // Reset state on click elsewhere
-            map.on('click', () => {
-                if (currentState) {
-                    map.setFeatureState(
-                        { source: 'nigeria-realtime', id: currentState.id },
-                        { selected: false }
-                    );
-                    currentState = null;
-                }
-            });
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                layer.bringToFront();
+            }
+            
+            // Show tooltip on mobile
+            if (isMobile) {
+                layer.bindTooltip(layer.feature.properties.ADM1_EN, {
+                    permanent: false,
+                    direction: 'top',
+                    className: 'mobile-tooltip'
+                }).openTooltip();
+            }
         }
         
-        // Load data on map load
-        map.on('load', async () => {
-            // Add GeoJSON source
+        // Reset highlight
+        function resetHighlight(e) {
+            if (geojsonLayer) {
+                geojsonLayer.resetStyle(e.target);
+            }
+            if (isMobile) {
+                e.target.closeTooltip();
+            }
+        }
+        
+        // Handle state clicks
+        function onStateClick(e) {
+            const feature = e.target.feature;
+            currentState = feature.properties;
+            
+            // Update state info
+            document.getElementById('state-info').innerHTML = `
+                <h5>${feature.properties.ADM1_EN}</h5>
+                <div class="row small">
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="fw-bold">Overall</div>
+                            <div class="fs-5">${(feature.properties.composite_norm * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="fw-bold">Solar</div>
+                            <div class="fs-5">${(feature.properties.solar_norm * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="fw-bold">Wind</div>
+                            <div class="fs-5">${(feature.properties.wind_norm * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2 text-center">
+                    <small class="text-muted">Hydro: ${(feature.properties.hydro_norm * 100).toFixed(1)}%</small>
+                </div>
+            `;
+            
+            // Update chart
+            energyChart.data.datasets[0].data = [
+                feature.properties.solar_norm,
+                feature.properties.wind_norm,
+                feature.properties.hydro_norm
+            ];
+            energyChart.update();
+            
+            // Update recommendation
+            const recommended = feature.properties.recommended_energy || 'Solar';
+            const confidence = feature.properties.confidence_level || 'High';
+            
+            document.getElementById('recommended-energy').innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-lightbulb me-2 fs-5"></i>
+                    <div>
+                        <strong class="d-block">${recommended}</strong>
+                        <small>Confidence: ${confidence}</small>
+                    </div>
+                </div>
+            `;
+            
+            // Open panel on mobile
+            if (isMobile) {
+                const dataPanel = document.getElementById('data-panel');
+                const menuToggle = document.getElementById('menu-toggle');
+                dataPanel.classList.remove('collapsed');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+            }
+            
+            // Zoom to state
+            map.fitBounds(e.target.getBounds().pad(0.1));
+        }
+        
+        // Load and display GeoJSON data
+        async function loadGeoJSON(data) {
+            if (geojsonLayer) {
+                map.removeLayer(geojsonLayer);
+            }
+            
+            geojsonLayer = L.geoJSON(data, {
+                style: getStateStyle,
+                onEachFeature: function(feature, layer) {
+                    layer.on({
+                        mouseover: highlightFeature,
+                        mouseout: resetHighlight,
+                        click: onStateClick
+                    });
+                    
+                    // Add touch events for mobile
+                    if (isMobile) {
+                        layer.on('touchstart', function(e) {
+                            highlightFeature(e);
+                        });
+                        
+                        layer.on('touchend', function(e) {
+                            onStateClick(e);
+                            setTimeout(() => resetHighlight(e), 1000);
+                        });
+                    }
+                }
+            }).addTo(map);
+            
+            // Fit bounds to Nigeria
+            map.fitBounds(geojsonLayer.getBounds());
+        }
+        
+        // Initialize everything
+        async function initDashboard() {
+            // Initialize mobile controls
+            initMobileControls();
+            
+            // Initialize chart
+            initChart();
+            
+            // Load data
             const data = await loadData();
             
             if (data) {
-                map.addSource('nigeria-realtime', {
-                    type: 'geojson',
-                    data: data,
-                    generateId: true
-                });
+                // Load GeoJSON
+                await loadGeoJSON(data);
                 
-                // Add layers
-                map.addLayer({
-                    id: 'nigeria-states-realtime',
-                    type: 'fill',
-                    source: 'nigeria-realtime',
-                    paint: {
-                        'fill-color': [
-                            'interpolate',
-                            ['linear'],
-                            ['get', 'composite_norm'],
-                            0, '#ffeda0',
-                            0.2, '#fed976',
-                            0.4, '#feb24c',
-                            0.6, '#fd8d3c',
-                            0.8, '#fc4e2a',
-                            1.0, '#e31a1c'
-                        ],
-                        'fill-opacity': [
-                            'case',
-                            ['boolean', ['feature-state', 'selected'], false],
-                            0.9,
-                            0.7
-                        ],
-                        'fill-outline-color': '#555555'
-                    }
-                });
-                
-                // Add state labels
-                map.addLayer({
-                    id: 'state-labels',
-                    type: 'symbol',
-                    source: 'nigeria-realtime',
-                    layout: {
-                        'text-field': ['get', 'ADM1_EN'],
-                        'text-font': ['Open Sans Bold'],
-                        'text-size': 11,
-                        'text-transform': 'uppercase'
-                    },
-                    paint: {
-                        'text-color': '#000000',
-                        'text-halo-color': '#ffffff',
-                        'text-halo-width': 1
-                    }
-                });
-                
-                // Setup interactions
-                setupMapInteractions(data);
-                
-                // Initialize chart
-                initChart();
-                
-                // Auto-refresh every 5 minutes
+                // Set up auto-refresh (every 5 minutes)
                 setInterval(async () => {
                     console.log('Refreshing data...');
                     const newData = await loadData();
-                    if (newData) {
-                        map.getSource('nigeria-realtime').setData(newData);
+                    if (newData && geojsonLayer) {
+                        await loadGeoJSON(newData);
                     }
                 }, 300000); // 5 minutes
             }
-        });
+            
+            // Handle orientation changes
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 150);
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                map.invalidateSize();
+            });
+        }
         
-        // Handle errors
-        map.on('error', (e) => {
-            console.error('Map error:', e);
-        });
+        // Start the dashboard
+        document.addEventListener('DOMContentLoaded', initDashboard);
+        
+        // Prevent default touch behavior for map
+        document.getElementById('map').addEventListener('touchmove', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault(); // Allow pinch-to-zoom
+            }
+        }, { passive: false });
     </script>
 </body>
 </html>
