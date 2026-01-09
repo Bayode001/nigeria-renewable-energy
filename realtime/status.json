@@ -1,0 +1,13 @@
+{
+  "status": "online",
+  "last_update": "2024-01-09T06:00:00Z",
+  "data_sources": {
+    "solar": "NASA POWER API",
+    "wind": "Open-Meteo API",
+    "hydro": "Local Analysis"
+  },
+  "monitoring": {
+    "update_frequency": "hourly",
+    "next_update": "2024-01-09T07:00:00Z"
+  }
+}
