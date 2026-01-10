@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nigeria Energy Realtime Dashboard | Protected Access</title>
+    <link rel="icon" type="image/x-icon" href="https://bayode001.github.io/nigeria-renewable-energy/favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 1200px;
+            width: 100%;
+            gap: 30px;
+        }
+
+        /* Login Container */
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .login-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+            margin: 0 auto 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            outline: none;
+        }
+
+        input[type="password"]:focus {
+            border-color: #667eea;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            color: #ff4757;
+            font-size: 14px;
+            margin-top: 10px;
+            min-height: 20px;
+            text-align: center;
+        }
+
+        .attempts-warning {
+            color: #ffa502;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* Dashboard Container */
+        .dashboard-container {
+            width: 100%;
+            height: calc(100vh - 40px);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: none;
+            position: relative;
+        }
+
+        .dashboard-header {
+            background: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header-left h2 {
+            color: #333;
+            font-size: 20px;
+        }
+
+        .logout-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #ff3742;
+        }
+
+        iframe {
+            width: 100%;
+            height: calc(100% - 70px);
+            border: none;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #667eea;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div class="login-container" id="loginContainer">
+            <div class="logo">⚡</div>
+            <h1>Nigeria Energy Dashboard</h1>
+            <p class="subtitle">Enter password to access realtime energy monitoring system</p>
+            
+            <div class="input-group">
+                <label for="password">Access Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" placeholder="Enter your secure password">
+                    <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+                </div>
+            </div>
+            
+            <button onclick="checkPassword()" id="loginBtn">Access Dashboard</button>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="attempts-warning" id="attemptsWarning"></div>
+            
+            <p class="footer">Authorized personnel only. All access is logged.</p>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div class="dashboard-container" id="dashboardContainer">
+            <div class="dashboard-header">
+                <div class="header-left">
+                    <h2>Nigeria Realtime Energy Dashboard</h2>
+                    <p style="color: #666; font-size: 14px; margin-top: 5px;">
+                        Last updated: <span id="currentTime"></span>
+                    </p>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    🔓 Logout
+                </button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Loading dashboard...</p>
+            </div>
+            <iframe 
+                id="dashboardFrame"
+                src=""
+                title="Nigeria Energy Realtime Dashboard"
+                allow="fullscreen"
+                onload="hideLoading()"
+            ></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - UPDATE THESE VALUES
+        // Replace with your desired password's SHA-256 hash
+        // Generate hash at: https://emn178.github.io/online-tools/sha256.html
+        const CORRECT_HASH = "4c75ec7a2f00447276faf8733d9a34d8c522d00d8dfa203bd2b520e9d46f95c6"; // Hash for "123"
+        
+        const MAX_ATTEMPTS = 5;
+        const LOCKOUT_TIME = 300000; // 5 minutes in milliseconds
+        
+        let attempts = 0;
+        let lockedUntil = 0;
+
+        // DOM Elements
+        const loginContainer = document.getElementById('loginContainer');
+        const dashboardContainer = document.getElementById('dashboardContainer');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('errorMessage');
+        const attemptsWarning = document.getElementById('attemptsWarning');
+        const loginBtn = document.getElementById('loginBtn');
+        const dashboardFrame = document.getElementById('dashboardFrame');
+        const loading = document.getElementById('loading');
+        const currentTime = document.getElementById('currentTime');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is already logged in
+            const savedSession = localStorage.getItem('nigeria_energy_session');
+            if (savedSession && Date.now() < JSON.parse(savedSession).expires) {
+                showDashboard();
+            }
+            
+            updateTime();
+            setInterval(updateTime, 60000); // Update time every minute
+            
+            // Allow Enter key to submit
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkPassword();
+                }
+            });
+        });
+
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+            const dateString = now.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            if (currentTime) {
+                currentTime.textContent = `${dateString} ${timeString}`;
+            }
+        }
+
+        function togglePassword() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+        }
+
+        async function checkPassword() {
+            // Check if locked out
+            if (Date.now() < lockedUntil) {
+                const minutesLeft = Math.ceil((lockedUntil - Date.now()) / 60000);
+                errorMessage.textContent = `Too many failed attempts. Try again in ${minutesLeft} minute(s).`;
+                return;
+            }
+
+            const password = passwordInput.value.trim();
+            
+            if (!password) {
+                errorMessage.textContent = "Please enter a password";
+                return;
+            }
+
+            // Show loading
+            loginBtn.innerHTML = '🔐 Verifying...';
+            loginBtn.disabled = true;
+
+            // Hash the password using SHA-256
+            try {
+                const hash = await sha256(password);
+                
+                if (hash === CORRECT_HASH) {
+                    // Successful login
+                    attempts = 0;
+                    showDashboard();
+                    
+                    // Save session for 8 hours
+                    const session = {
+                        expires: Date.now() + (8 * 60 * 60 * 1000)
+                    };
+                    localStorage.setItem('nigeria_energy_session', JSON.stringify(session));
+                } else {
+                    // Failed attempt
+                    attempts++;
+                    errorMessage.textContent = "Incorrect password. Please try again.";
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                    
+                    // Update attempts warning
+                    attemptsWarning.textContent = `${MAX_ATTEMPTS - attempts} attempts remaining`;
+                    
+                    // Check for lockout
+                    if (attempts >= MAX_ATTEMPTS) {
+                        lockedUntil = Date.now() + LOCKOUT_TIME;
+                        const minutes = LOCKOUT_TIME / 60000;
+                        errorMessage.textContent = `Too many failed attempts. Account locked for ${minutes} minutes.`;
+                        attemptsWarning.textContent = '';
+                    }
+                }
+            } catch (error) {
+                errorMessage.textContent = "Error processing password. Please try again.";
+                console.error("Hash error:", error);
+            } finally {
+                loginBtn.innerHTML = 'Access Dashboard';
+                loginBtn.disabled = false;
+            }
+        }
+
+        async function sha256(message) {
+            // Convert string to ArrayBuffer
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            
+            // Hash the data
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            
+            // Convert ArrayBuffer to hex string
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function showDashboard() {
+            loginContainer.style.display = 'none';
+            dashboardContainer.style.display = 'block';
+            
+            // Show loading indicator
+            loading.style.display = 'block';
+            
+            // Load the realtime dashboard
+            dashboardFrame.src = "https://bayode001.github.io/nigeria-renewable-energy/realtime/";
+            
+            // Auto-refresh every 5 minutes
+            setInterval(() => {
+                dashboardFrame.contentWindow.location.reload();
+            }, 300000);
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        function logout() {
+            // Clear session
+            localStorage.removeItem('nigeria_energy_session');
+            
+            // Reset state
+            attempts = 0;
+            errorMessage.textContent = '';
+            attemptsWarning.textContent = '';
+            passwordInput.value = '';
+            
+            // Show login screen
+            dashboardContainer.style.display = 'none';
+            loginContainer.style.display = 'block';
+            
+            // Focus on password field
+            passwordInput.focus();
+            
+            // Stop auto-refresh
+            location.reload();
+        }
+
+        // Prevent right-click (optional)
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // Prevent F12 and Ctrl+Shift+I
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+                (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

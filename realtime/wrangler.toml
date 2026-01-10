@@ -1,0 +1,13 @@
+name = "nigeria-energy-auth"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# Set your credentials as environment variables (safer than hardcoding)
+[vars]
+DASHBOARD_USERNAME = "energy_admin"
+DASHBOARD_PASSWORD = "NigeriaEnergy2026!"
+
+# Optional: Add KV namespace if you want multiple users later
+# [[kv_namespaces]]
+# binding = "AUTH_USERS"
+# id = "your-kv-id"
