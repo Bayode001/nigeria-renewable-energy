@@ -1,0 +1,25 @@
+<!-- emergency-access.html in your repo -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emergency Access</title>
+    <script>
+        // Different password for emergency access
+        const EMERGENCY_PASS = "EmergencyAccess2024!";
+        
+        function checkEmergencyAccess() {
+            const pass = prompt("🔐 Emergency Access - Enter emergency password:");
+            if (pass === EMERGENCY_PASS) {
+                window.location.href = "https://bayode001.github.io/nigeria-renewable-energy/realtime/";
+            } else {
+                alert("Invalid emergency password");
+                window.location.href = "https://bayode001.github.io/nigeria-renewable-energy/";
+            }
+        }
+        window.onload = checkEmergencyAccess;
+    </script>
+</head>
+<body>
+    <p>Loading emergency access...</p>
+</body>
+</html>

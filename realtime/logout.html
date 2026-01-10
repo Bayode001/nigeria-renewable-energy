@@ -1,0 +1,20 @@
+<!-- logout.html in your GitHub repo -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logged Out - Nigeria Energy Dashboard</title>
+    <script>
+        // Clear HTTP Basic Auth cache (tricky but this helps)
+        fetch('https://nigeria-energy-auth.bayode001.workers.dev/logout', {
+            method: 'POST',
+            credentials: 'include'
+        }).then(() => {
+            alert('You have been logged out. Close all browser windows to complete logout.');
+            window.location.href = 'https://bayode001.github.io/nigeria-renewable-energy/';
+        });
+    </script>
+</head>
+<body>
+    <p>Logging out...</p>
+</body>
+</html>

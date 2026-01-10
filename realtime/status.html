@@ -1,0 +1,50 @@
+<!-- status.html in your repo -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Status</title>
+    <style>
+        .status { padding: 20px; margin: 20px; border-radius: 5px; }
+        .up { background: #d4edda; color: #155724; }
+        .down { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Nigeria Energy Dashboard Status</h1>
+    <div id="status" class="status">Checking...</div>
+    
+    <script>
+        async function checkStatus() {
+            const endpoints = [
+                { name: 'Authentication Gateway', url: 'https://nigeria-energy-auth.bayode001.workers.dev' },
+                { name: 'Realtime Dashboard', url: 'https://bayode001.github.io/nigeria-renewable-energy/realtime/' },
+                { name: 'GitHub Pages', url: 'https://bayode001.github.io/nigeria-renewable-energy/' }
+            ];
+            
+            let allUp = true;
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint.url, { method: 'HEAD' });
+                    console.log(`${endpoint.name}: ${response.status}`);
+                } catch (error) {
+                    console.error(`${endpoint.name}: DOWN`);
+                    allUp = false;
+                }
+            }
+            
+            const statusDiv = document.getElementById('status');
+            if (allUp) {
+                statusDiv.textContent = '✅ All systems operational';
+                statusDiv.className = 'status up';
+            } else {
+                statusDiv.textContent = '⚠️ Some services experiencing issues';
+                statusDiv.className = 'status down';
+            }
+        }
+        
+        checkStatus();
+        setInterval(checkStatus, 300000); // Check every 5 minutes
+    </script>
+</body>
+</html>
